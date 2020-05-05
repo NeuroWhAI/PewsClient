@@ -19,9 +19,31 @@
         </StatusBar>
         <Grid Background="Gray">
             <Image x:Name="canvas" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"></Image>
-            <Image Source="pack://application:,,,/Resources/mmi bar.png"
-                   RenderOptions.BitmapScalingMode="HighQuality"
-                   Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Bottom"></Image>
+            <WrapPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <StackPanel Width="60" Margin="0,16,2,2">
+                    <StackPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontSize" Value="16"></Setter>
+                        </Style>
+                    </StackPanel.Resources>
+                    <StackPanel Orientation="Horizontal" >
+                        <TextBlock Foreground="DarkRed">강:</TextBlock>
+                        <TextBlock x:Name="txtHighStn" Foreground="DarkRed" Margin="4,0">0</TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Foreground="Yellow">중:</TextBlock>
+                        <TextBlock x:Name="txtMidStn" Foreground="Yellow" Margin="4,0">00</TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Foreground="YellowGreen">약:</TextBlock>
+                        <TextBlock x:Name="txtLowStn" Foreground="YellowGreen" Margin="4,0">000</TextBlock>
+                    </StackPanel>
+                </StackPanel>
+                <Image Source="pack://application:,,,/Resources/mmi bar.png"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Stretch="None" HorizontalAlignment="Right"
+                       Margin="0,16,0,0"></Image>
+            </WrapPanel>
             <StackPanel Margin="2">
                 <StackPanel x:Name="boxEqkInfo"
                             Background="#EEF64D50"

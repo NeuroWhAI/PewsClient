@@ -288,6 +288,10 @@ namespace PewsClient
                     {
                         HandleMmi(body);
 
+                        txtHighStn.Text = m_stations.Count((stn) => (stn.Mmi >= 5)).ToString();
+                        txtMidStn.Text = m_stations.Count((stn) => (stn.Mmi >= 3 && stn.Mmi <= 4)).ToString();
+                        txtLowStn.Text = m_stations.Count((stn) => (stn.Mmi == 2)).ToString();
+
                         // 진도 종합 레벨 계산.
                         double level = 0;
                         foreach (var stn in m_stations)
