@@ -52,6 +52,12 @@ namespace PewsClient
 
         private Brush[] m_mmiWpfBrushes = null;
         private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xee, 0x00, 0x00));
+        private Brush m_newsHeaderBrush = new SolidColorBrush(Color.FromRgb(0xff, 0x3f, 0x3f));
+        private Brush m_notiHeaderBrush = new SolidColorBrush(Color.FromRgb(0x02, 0x53, 0x73));
+        private Brush m_notiBackBrush = new SolidColorBrush(Color.FromRgb(0x03, 0x70, 0x9b));
+
+        private Style m_newsTextStyle = null;
+        private Style m_notiTextStyle = null;
 
         private int m_beepLevel = 0;
         private MediaPlayer m_wavBeep = new MediaPlayer();
@@ -401,6 +407,11 @@ namespace PewsClient
                 .Select((color) => new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)))
                 .ToArray();
 
+            m_newsTextStyle = new Style(typeof(TextBlock));
+            m_newsTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Yellow));
+            m_notiTextStyle = new Style(typeof(TextBlock));
+            m_notiTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.White));
+
             m_wavBeep.Open(new Uri("res/beep.mp3", UriKind.Relative));
             m_wavBeep1.Open(new Uri("res/beep1.mp3", UriKind.Relative));
             m_wavBeep2.Open(new Uri("res/beep2.mp3", UriKind.Relative));
@@ -558,8 +569,32 @@ namespace PewsClient
             boxEqkInfo.Visibility = Visibility.Collapsed;
         }
 
-        private void UpdateEqkInfo(string location, int mmi, double magnitude, double depth = double.NaN)
+        private void UpdateEqkInfo(int phase, DateTimeOffset time, string location, int mmi, double magnitude, double depth = double.NaN)
         {
+            Style style;
+
+            if (phase < 3)
+            {
+                boxEqkInfoHeader.Background = m_newsHeaderBrush;
+                boxEqkInfo.Background = Brushes.Red;
+
+                style = m_newsTextStyle;
+            }
+            else
+            {
+                boxEqkInfoHeader.Background = m_notiHeaderBrush;
+                boxEqkInfo.Background = m_notiBackBrush;
+
+                style = m_notiTextStyle;
+            }
+
+            boxEqkInfo.Resources.Remove(typeof(TextBlock));
+            boxEqkInfo.Resources.Add(typeof(TextBlock), style);
+
+            txtEqkNotiKind.Text = (phase < 3) ? "긴급지진속보" : "지진정보";
+            txtEqkDate.Text = time.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            txtEqkTime.Text = time.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+
             txtEqkLoc.Text = location.Trim();
             txtMmi.Text = Earthquake.MMIToString(mmi);
             txtMag.Text = magnitude.ToString("F1");
@@ -665,11 +700,11 @@ namespace PewsClient
 
             if (phase < 3)
             {
-                UpdateEqkInfo(eqkStr, eqkIntens, eqkMag);
+                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag);
             }
             else
             {
-                UpdateEqkInfo(eqkStr, eqkIntens, eqkMag, (eqkDep == 0) ? double.NaN : eqkDep);
+                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag, (eqkDep == 0) ? double.NaN : eqkDep);
             }
 
             string alarmId = eqkId + phase;
