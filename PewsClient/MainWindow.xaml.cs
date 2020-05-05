@@ -50,6 +50,9 @@ namespace PewsClient
         private Gdi.Brush[] m_mmiBrushes = null;
         private Gdi.Image m_imgMap = null;
 
+        private Brush[] m_mmiWpfBrushes = null;
+        private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xee, 0x00, 0x00));
+
         private int m_beepLevel = 0;
         private MediaPlayer m_wavBeep = new MediaPlayer();
         private MediaPlayer m_wavBeep1 = new MediaPlayer();
@@ -310,7 +313,7 @@ namespace PewsClient
                         {
                             ShowEqkMmi();
                         }
-                        else
+                        else if (phase <= 1)
                         {
                             HideEqkMmi();
                         }
@@ -327,6 +330,7 @@ namespace PewsClient
                     else
                     {
                         m_beepLevel = 0;
+                        m_maxMmi = 1;
                     }
                 }
 
@@ -384,10 +388,18 @@ namespace PewsClient
 
         private void LoadResources()
         {
-            m_mmiBrushes = MmiColors
-                .Select((color) => new Gdi.SolidBrush(HexCodeToColor(color)))
+            var mmiColors = MmiColors
+                .Select((color) => HexCodeToColor(color))
+                .ToArray();
+
+            m_mmiBrushes = mmiColors
+                .Select((color) => new Gdi.SolidBrush(color))
                 .ToArray();
             m_imgMap = Gdi.Image.FromFile("res/map.png");
+
+            m_mmiWpfBrushes = mmiColors
+                .Select((color) => new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)))
+                .ToArray();
 
             m_wavBeep.Open(new Uri("res/beep.mp3", UriKind.Relative));
             m_wavBeep1.Open(new Uri("res/beep1.mp3", UriKind.Relative));
@@ -539,7 +551,6 @@ namespace PewsClient
         private void ShowEqkInfo()
         {
             boxEqkInfo.Visibility = Visibility.Visible;
-            m_maxMmi = 1; // 계측진도가 다시 갱신되도록 함.
         }
 
         private void HideEqkInfo()
@@ -577,8 +588,7 @@ namespace PewsClient
                 mmi = MmiColors.Length - 1;
             }
 
-            var gdiColor = HexCodeToColor(MmiColors[mmi]);
-            boxEqkMmi.Background = new SolidColorBrush(Color.FromRgb(gdiColor.R, gdiColor.G, gdiColor.B));
+            boxEqkMmi.Background = m_mmiWpfBrushes[mmi];
 
             txtEqkMmi.Text = Earthquake.MMIToString(mmi);
             txtEqkMmi.Foreground = (mmi >= 6) ? Brushes.White : Brushes.Black;
@@ -612,7 +622,7 @@ namespace PewsClient
             else
             {
                 m_beepLevel = 4;
-                lvlBrush = Brushes.DarkRed;
+                lvlBrush = m_redBrush;
             }
 
             lblLevel.Foreground = lvlBrush;

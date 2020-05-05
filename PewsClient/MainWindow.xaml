@@ -60,8 +60,8 @@
                         </Style>
                     </StackPanel.Resources>
                     <StackPanel Orientation="Horizontal" >
-                        <TextBlock Foreground="DarkRed">강:</TextBlock>
-                        <TextBlock x:Name="txtHighStn" Foreground="DarkRed" Margin="4,0">0</TextBlock>
+                        <TextBlock Foreground="#EE0000">강:</TextBlock>
+                        <TextBlock x:Name="txtHighStn" Foreground="#EE0000" Margin="4,0">0</TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Foreground="Yellow">중:</TextBlock>
