@@ -1,0 +1,64 @@
+﻿<Window x:Class="PewsClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PewsClient"
+        mc:Ignorable="d"
+        Title="PEWS @ NeuroWhAI" Height="580" Width="480" MinHeight="350" MinWidth="250"
+        Loaded="Window_Loaded" Closing="Window_Closing">
+    <DockPanel x:Name="dock">
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock x:Name="txtStatus">Loading</TextBlock>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+        <Grid Background="Gray">
+            <Image x:Name="canvas" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"></Image>
+            <Image Source="pack://application:,,,/Resources/mmi bar.png"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Bottom"></Image>
+            <StackPanel Margin="2">
+                <StackPanel x:Name="boxEqkInfo"
+                            Background="#EEF64D50"
+                            HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <StackPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#FFB240"></Setter>
+                        </Style>
+                    </StackPanel.Resources>
+                    <TextBlock x:Name="txtEqkLoc" Margin="4,4,4,0" FontSize="16" TextWrapping="Wrap">어디 무슨군 서북서쪽 00km 지역</TextBlock>
+                    <WrapPanel Orientation="Horizontal" Margin="4,0,4,4">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                            <TextBlock FontSize="16" VerticalAlignment="Center">진도</TextBlock>
+                            <TextBlock x:Name="txtMmi" Margin="4,0,0,0" FontSize="20"
+                                       VerticalAlignment="Center">Ⅵ</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                            <TextBlock FontSize="16" VerticalAlignment="Center">규모</TextBlock>
+                            <TextBlock x:Name="txtMag" Margin="4,0,0,0" FontSize="20"
+                                   VerticalAlignment="Center">4.2</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontSize="16" VerticalAlignment="Center">깊이</TextBlock>
+                            <TextBlock x:Name="txtDepth" Margin="4,0,2,0" FontSize="20"
+                                   VerticalAlignment="Center">-</TextBlock>
+                            <TextBlock FontSize="20" VerticalAlignment="Center">km</TextBlock>
+                        </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="2" VerticalAlignment="Bottom">
+                <StackPanel Orientation="Horizontal" Height="30">
+                    <TextBlock x:Name="lblLevel" Foreground="White" FontSize="20" VerticalAlignment="Center">Lv</TextBlock>
+                    <TextBlock x:Name="txtLevel" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="4,0">000</TextBlock>
+                </StackPanel>
+                <TextBlock x:Name="txtServerTime" TextWrapping="Wrap" Foreground="White">서버 시간</TextBlock>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>
