@@ -437,7 +437,8 @@ namespace PewsClient
                     }
 
                     // Wave
-                    if (m_prevPhase > 1 && m_waveTick > 0)
+                    if (m_prevPhase > 1
+                        && m_waveTick > 0.0f && m_waveTick < 2048.0f)
                     {
                         // P
                         g.DrawEllipse(pWavePen, m_epicenter.X - m_waveTick * 2, m_epicenter.Y - m_waveTick * 2,
