@@ -518,24 +518,25 @@ namespace PewsClient
 
         private void UpdateMmiLevel(double level)
         {
+            double scale = m_stations.Count / 150.0;
             Brush lvlBrush;
 
-            if (level < Earthquake.MMIToMinimumGal(2))
+            if (level < Earthquake.MMIToMinimumGal(2) * scale)
             {
                 m_beepLevel = 0;
                 lvlBrush = Brushes.White;
             }
-            else if (level < Earthquake.MMIToMinimumGal(3))
+            else if (level < Earthquake.MMIToMinimumGal(3) * scale)
             {
                 m_beepLevel = 1;
                 lvlBrush = Brushes.YellowGreen;
             }
-            else if (level < Earthquake.MMIToMinimumGal(5))
+            else if (level < Earthquake.MMIToMinimumGal(5) * scale)
             {
                 m_beepLevel = 2;
                 lvlBrush = Brushes.Yellow;
             }
-            else if (level < Earthquake.MMIToMinimumGal(7))
+            else if (level < Earthquake.MMIToMinimumGal(7) * scale)
             {
                 m_beepLevel = 3;
                 lvlBrush = Brushes.Orange;
