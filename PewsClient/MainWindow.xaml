@@ -16,6 +16,9 @@
             <StatusBarItem>
                 <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
             </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <CheckBox x:Name="chkPin" Checked="CheckBoxPin_Changed" Unchecked="CheckBoxPin_Changed">UI 고정</CheckBox>
+            </StatusBarItem>
         </StatusBar>
         <Grid x:Name="boxEqkInfo" DockPanel.Dock="Top" Background="#FF3F3F">
             <!-- 상단 -->
@@ -24,22 +27,22 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <WrapPanel x:Name="boxEqkInfoHeader" Background="Red">
-                <TextBlock x:Name="txtEqkNotiKind" Margin="4,2,10,2" FontSize="13">지진조기경보</TextBlock>
-                <TextBlock x:Name="txtEqkDate" Margin="4,2,10,2" FontSize="13">1998-02-12</TextBlock>
+                <TextBlock x:Name="txtEqkNotiKind" Margin="4,2,10,2" FontSize="13">지진알림종류</TextBlock>
+                <TextBlock x:Name="txtEqkDate" Margin="4,2,10,2" FontSize="13">0000-00-00</TextBlock>
                 <TextBlock x:Name="txtEqkTime" Margin="4,2,10,2" FontSize="13">00:00:00</TextBlock>
             </WrapPanel>
             <StackPanel Grid.Row="1">
-                <TextBlock x:Name="txtEqkLoc" Margin="4,2,4,-2" FontSize="17" TextWrapping="Wrap">어디 무슨군 서북서쪽 00km 지역</TextBlock>
+                <TextBlock x:Name="txtEqkLoc" Margin="4,2,4,-2" FontSize="17" TextWrapping="Wrap">지진 발생 지역 정보</TextBlock>
                 <WrapPanel Orientation="Horizontal" Margin="4,0,4,2">
                     <StackPanel Orientation="Horizontal" Margin="0,0,32,0">
                         <TextBlock FontSize="16" VerticalAlignment="Center">진도:</TextBlock>
                         <TextBlock x:Name="txtMmi" Margin="4,0,0,0" FontSize="20"
-                                       VerticalAlignment="Center">Ⅵ</TextBlock>
+                                       VerticalAlignment="Center">-</TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,32,0">
                         <TextBlock FontSize="16" VerticalAlignment="Center">규모:</TextBlock>
                         <TextBlock x:Name="txtMag" Margin="4,0,2,0" FontSize="20"
-                                   VerticalAlignment="Center">4.2</TextBlock>
+                                   VerticalAlignment="Center">-</TextBlock>
                         <TextBlock FontSize="16" VerticalAlignment="Center">M</TextBlock>
                         <TextBlock FontSize="11" VerticalAlignment="Bottom">L</TextBlock>
                     </StackPanel>

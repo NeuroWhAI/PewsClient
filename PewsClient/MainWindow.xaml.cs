@@ -38,6 +38,8 @@ namespace PewsClient
         {
             InitializeComponent();
 
+            UpdateEqkMmiPanel(-1);
+
             HideEqkInfo();
             HideEqkMmi();
 
@@ -310,7 +312,7 @@ namespace PewsClient
                         if (maxMmi > m_maxMmi)
                         {
                             m_maxMmi = maxMmi;
-                            UpdateEqkMmi(maxMmi);
+                            UpdateEqkMmiPanel(maxMmi);
 
                             m_wavUpdate.Stop();
                             m_wavUpdate.Play();
@@ -337,6 +339,7 @@ namespace PewsClient
                     {
                         m_beepLevel = 0;
                         m_maxMmi = 1;
+                        UpdateEqkMmiPanel(-1);
                     }
                 }
 
@@ -387,6 +390,16 @@ namespace PewsClient
             else
             {
                 m_wavBeep3.Play();
+            }
+        }
+
+        private void CheckBoxPin_Changed(object sender, RoutedEventArgs e)
+        {
+            var box = sender as CheckBox;
+            if (box.IsChecked == true)
+            {
+                ShowEqkInfo();
+                ShowEqkMmi();
             }
         }
 
@@ -566,7 +579,10 @@ namespace PewsClient
 
         private void HideEqkInfo()
         {
-            boxEqkInfo.Visibility = Visibility.Collapsed;
+            if (chkPin.IsChecked != true)
+            {
+                boxEqkInfo.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateEqkInfo(int phase, DateTimeOffset time, string location, int mmi, double magnitude, double depth = double.NaN)
@@ -608,15 +624,26 @@ namespace PewsClient
 
         private void HideEqkMmi()
         {
-            boxEqkMmi.Visibility = Visibility.Collapsed;
+            if (chkPin.IsChecked != true)
+            {
+                boxEqkMmi.Visibility = Visibility.Collapsed;
+            }
+
+            UpdateEqkMmiPanel(-1);
+
             m_maxMmi = 1; // 다음에 계측진도가 처음부터 갱신될 수 있도록 초기화.
         }
 
-        private void UpdateEqkMmi(int mmi)
+        private void UpdateEqkMmiPanel(int mmi)
         {
-            if (mmi < 0)
+            if (mmi <= 0)
             {
-                mmi = 0;
+                boxEqkMmi.Background = Brushes.SlateGray;
+
+                txtEqkMmi.Text = string.Empty;
+                txtEqkMmi.Foreground = Brushes.Black;
+
+                return;
             }
             else if (mmi >= MmiColors.Length)
             {
