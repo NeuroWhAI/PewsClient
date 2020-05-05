@@ -142,6 +142,17 @@ namespace PewsClient
                     catch (WebException)
                     {
                         txtStatus.Text = "Loading";
+
+                        if (m_tide < 1000)
+                        {
+                            m_tide += 200;
+                        }
+                        else
+                        {
+                            m_tide -= 200;
+                        }
+                        txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
+
                         return;
                     }
 
