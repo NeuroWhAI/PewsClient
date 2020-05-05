@@ -39,6 +39,7 @@ namespace PewsClient
             InitializeComponent();
 
             HideEqkInfo();
+            HideEqkMmi();
 
             txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
         }
@@ -78,6 +79,8 @@ namespace PewsClient
 
         private List<int> m_intensityGrid = new List<int>();
         private bool m_updateGrid = false;
+
+        private int m_maxMmi = 1;
 
         //#############################################################################################
 
@@ -288,9 +291,29 @@ namespace PewsClient
                     {
                         HandleMmi(body);
 
+                        // 강도별 관측소 수.
                         txtHighStn.Text = m_stations.Count((stn) => (stn.Mmi >= 5)).ToString();
                         txtMidStn.Text = m_stations.Count((stn) => (stn.Mmi >= 3 && stn.Mmi <= 4)).ToString();
                         txtLowStn.Text = m_stations.Count((stn) => (stn.Mmi == 2)).ToString();
+
+                        // 계측진도 계산 및 표시.
+                        int maxMmi = m_stations.Max((stn) => stn.Mmi);
+                        if (maxMmi > m_maxMmi)
+                        {
+                            m_maxMmi = maxMmi;
+                            UpdateEqkMmi(maxMmi);
+
+                            m_wavUpdate.Stop();
+                            m_wavUpdate.Play();
+                        }
+                        if (maxMmi >= 2)
+                        {
+                            ShowEqkMmi();
+                        }
+                        else
+                        {
+                            HideEqkMmi();
+                        }
 
                         // 진도 종합 레벨 계산.
                         double level = 0;
@@ -516,6 +539,7 @@ namespace PewsClient
         private void ShowEqkInfo()
         {
             boxEqkInfo.Visibility = Visibility.Visible;
+            m_maxMmi = 1; // 계측진도가 다시 갱신되도록 함.
         }
 
         private void HideEqkInfo()
@@ -529,6 +553,35 @@ namespace PewsClient
             txtMmi.Text = Earthquake.MMIToString(mmi);
             txtMag.Text = magnitude.ToString("F1");
             txtDepth.Text = (double.IsNaN(depth) ? "-" : depth.ToString("F0"));
+        }
+
+        private void ShowEqkMmi()
+        {
+            boxEqkMmi.Visibility = Visibility.Visible;
+        }
+
+        private void HideEqkMmi()
+        {
+            boxEqkMmi.Visibility = Visibility.Collapsed;
+            m_maxMmi = 1; // 다음에 계측진도가 처음부터 갱신될 수 있도록 초기화.
+        }
+
+        private void UpdateEqkMmi(int mmi)
+        {
+            if (mmi < 0)
+            {
+                mmi = 0;
+            }
+            else if (mmi >= MmiColors.Length)
+            {
+                mmi = MmiColors.Length - 1;
+            }
+
+            var gdiColor = HexCodeToColor(MmiColors[mmi]);
+            boxEqkMmi.Background = new SolidColorBrush(Color.FromRgb(gdiColor.R, gdiColor.G, gdiColor.B));
+
+            txtEqkMmi.Text = Earthquake.MMIToString(mmi);
+            txtEqkMmi.Foreground = (mmi >= 6) ? Brushes.White : Brushes.Black;
         }
 
         private void UpdateMmiLevel(double level)

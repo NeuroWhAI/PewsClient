@@ -17,9 +17,42 @@
                 <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
             </StatusBarItem>
         </StatusBar>
+        <Grid x:Name="boxEqkInfo" DockPanel.Dock="Top">
+            <!-- 상단 -->
+            <StackPanel Grid.Column="0"
+                        Background="#F64D50"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="0,0,0,2">
+                <StackPanel.Resources>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#FFB240"></Setter>
+                    </Style>
+                </StackPanel.Resources>
+                <TextBlock x:Name="txtEqkLoc" Margin="4,4,4,0" FontSize="16" TextWrapping="Wrap">어디 무슨군 서북서쪽 00km 지역</TextBlock>
+                <WrapPanel Orientation="Horizontal" Margin="4,0,4,4">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                        <TextBlock FontSize="16" VerticalAlignment="Center">진도</TextBlock>
+                        <TextBlock x:Name="txtMmi" Margin="4,0,0,0" FontSize="20"
+                                       VerticalAlignment="Center">Ⅵ</TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                        <TextBlock FontSize="16" VerticalAlignment="Center">규모</TextBlock>
+                        <TextBlock x:Name="txtMag" Margin="4,0,0,0" FontSize="20"
+                                   VerticalAlignment="Center">4.2</TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontSize="16" VerticalAlignment="Center">깊이</TextBlock>
+                        <TextBlock x:Name="txtDepth" Margin="4,0,2,0" FontSize="20"
+                                   VerticalAlignment="Center">-</TextBlock>
+                        <TextBlock FontSize="20" VerticalAlignment="Center">km</TextBlock>
+                    </StackPanel>
+                </WrapPanel>
+            </StackPanel>
+        </Grid>
         <Grid Background="Gray">
             <Image x:Name="canvas" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"></Image>
             <WrapPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <!-- 우하단 -->
                 <StackPanel Width="60" Margin="0,16,2,2">
                     <StackPanel.Resources>
                         <Style TargetType="TextBlock">
@@ -45,36 +78,22 @@
                        Margin="0,16,0,0"></Image>
             </WrapPanel>
             <StackPanel Margin="2">
-                <StackPanel x:Name="boxEqkInfo"
-                            Background="#EEF64D50"
-                            HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <StackPanel.Resources>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="#FFB240"></Setter>
-                        </Style>
-                    </StackPanel.Resources>
-                    <TextBlock x:Name="txtEqkLoc" Margin="4,4,4,0" FontSize="16" TextWrapping="Wrap">어디 무슨군 서북서쪽 00km 지역</TextBlock>
-                    <WrapPanel Orientation="Horizontal" Margin="4,0,4,4">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                            <TextBlock FontSize="16" VerticalAlignment="Center">진도</TextBlock>
-                            <TextBlock x:Name="txtMmi" Margin="4,0,0,0" FontSize="20"
-                                       VerticalAlignment="Center">Ⅵ</TextBlock>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                            <TextBlock FontSize="16" VerticalAlignment="Center">규모</TextBlock>
-                            <TextBlock x:Name="txtMag" Margin="4,0,0,0" FontSize="20"
-                                   VerticalAlignment="Center">4.2</TextBlock>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontSize="16" VerticalAlignment="Center">깊이</TextBlock>
-                            <TextBlock x:Name="txtDepth" Margin="4,0,2,0" FontSize="20"
-                                   VerticalAlignment="Center">-</TextBlock>
-                            <TextBlock FontSize="20" VerticalAlignment="Center">km</TextBlock>
-                        </StackPanel>
-                    </WrapPanel>
-                </StackPanel>
+                <!-- 좌상단 -->
+                <Grid x:Name="boxEqkMmi" Grid.Column="1"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Background="White">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock VerticalAlignment="Center" Padding="4,2" Background="SlateGray" Foreground="White">계측진도</TextBlock>
+                    <TextBlock x:Name="txtEqkMmi" Grid.Row="1" VerticalAlignment="Center" TextAlignment="Center" Padding="2"
+                                FontSize="28" FontWeight="Bold" Foreground="Black">Ⅵ</TextBlock>
+                    <Border Grid.RowSpan="2" BorderThickness="1" BorderBrush="Gray"></Border>
+                </Grid>
             </StackPanel>
             <StackPanel Margin="2" VerticalAlignment="Bottom">
+                <!-- 좌하단 -->
                 <StackPanel Orientation="Horizontal" Height="30">
                     <TextBlock x:Name="lblLevel" Foreground="White" FontSize="20" VerticalAlignment="Center">Lv</TextBlock>
                     <TextBlock x:Name="txtLevel" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="4,0">000</TextBlock>
