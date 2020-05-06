@@ -105,8 +105,8 @@ namespace PewsClient
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            StartSimulation("2017000407", "20171115142931"); // 포항 5.4
-            //StartSimulation("2016000276", "20160912194432"); // 경주 5.8
+            //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
+            StartSimulation("2016000291", "20160912203254"); // 경주 5.8
 #endif
 
             LoadResources();
