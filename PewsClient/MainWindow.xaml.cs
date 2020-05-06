@@ -127,6 +127,7 @@ namespace PewsClient
 
         private async void Timer_Tick(object sender, EventArgs e)
         {
+            bool bCheckLag = false;
             m_tickStopwatch.Restart();
 
             m_timer.Stop();
@@ -364,6 +365,9 @@ namespace PewsClient
 
 
                 DrawCanvas();
+
+
+                bCheckLag = true;
             }
             catch (Exception err)
             {
@@ -372,7 +376,14 @@ namespace PewsClient
             finally
             {
                 m_tickStopwatch.Stop();
-                var leftDelay = TimeSpan.FromMilliseconds(100) - m_tickStopwatch.Elapsed;
+                var elapsed = m_tickStopwatch.Elapsed;
+
+                if (bCheckLag)
+                {
+                    txtTickDelay.Text = $"Lag: {elapsed.TotalMilliseconds:F0}ms";
+                }
+
+                var leftDelay = TimeSpan.FromMilliseconds(100) - elapsed;
                 if (leftDelay.TotalMilliseconds > 0)
                 {
                     await Task.Delay(leftDelay);

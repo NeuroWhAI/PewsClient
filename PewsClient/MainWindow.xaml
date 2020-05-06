@@ -16,6 +16,10 @@
             <StatusBarItem>
                 <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
             </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock x:Name="txtTickDelay">Lag</TextBlock>
+            </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <CheckBox x:Name="chkPin" Checked="CheckBoxPin_Changed" Unchecked="CheckBoxPin_Changed">UI 고정</CheckBox>
             </StatusBarItem>
