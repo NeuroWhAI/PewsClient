@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gdi = System.Drawing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,8 +18,7 @@ using System.Windows.Threading;
 using System.Net;
 using System.Globalization;
 using System.IO;
-
-using Gdi = System.Drawing;
+using System.Diagnostics;
 
 namespace PewsClient
 {
@@ -53,6 +53,7 @@ namespace PewsClient
 
         private Gdi.Brush[] m_mmiBrushes = null;
         private Gdi.Image m_imgMap = null;
+        private Gdi.Bitmap m_canvasBitmap = null;
 
         private Brush[] m_mmiWpfBrushes = null;
         private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xff, 0x10, 0x00));
@@ -74,6 +75,7 @@ namespace PewsClient
         private MediaPlayer m_wavEnd = new MediaPlayer();
         private MediaPlayer[] m_wavUpdate = new MediaPlayer[11];
 
+        private Stopwatch m_tickStopwatch = new Stopwatch();
         private DispatcherTimer m_timer = new DispatcherTimer();
         private DispatcherTimer m_timerBeep = new DispatcherTimer();
 
@@ -108,7 +110,7 @@ namespace PewsClient
             LoadResources();
             DrawCanvas();
 
-            m_timer.Interval = TimeSpan.FromMilliseconds(100);
+            m_timer.Interval = TimeSpan.FromMilliseconds(10);
             m_timer.Tick += Timer_Tick;
             m_timer.Start();
 
@@ -125,6 +127,8 @@ namespace PewsClient
 
         private async void Timer_Tick(object sender, EventArgs e)
         {
+            m_tickStopwatch.Restart();
+
             m_timer.Stop();
 
             try
@@ -357,6 +361,9 @@ namespace PewsClient
                 {
                     txtStatus.Text = "Idle";
                 }
+
+
+                DrawCanvas();
             }
             catch (Exception err)
             {
@@ -364,9 +371,14 @@ namespace PewsClient
             }
             finally
             {
-                m_timer.Start();
+                m_tickStopwatch.Stop();
+                var leftDelay = TimeSpan.FromMilliseconds(100) - m_tickStopwatch.Elapsed;
+                if (leftDelay.TotalMilliseconds > 0)
+                {
+                    await Task.Delay(leftDelay);
+                }
 
-                DrawCanvas();
+                m_timer.Start();
             }
         }
 
@@ -421,6 +433,7 @@ namespace PewsClient
                 .Select((color) => new Gdi.SolidBrush(color))
                 .ToArray();
             m_imgMap = Gdi.Image.FromFile("res/map.png");
+            m_canvasBitmap = new Gdi.Bitmap(m_imgMap.Width, m_imgMap.Height);
 
             m_mmiWpfBrushes = mmiColors
                 .Select((color) => new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)))
@@ -471,15 +484,13 @@ namespace PewsClient
             float fWidth = m_imgMap.Width;
             float fHeight = m_imgMap.Height;
 
-            using (var tempBitmap = new Gdi.Bitmap(width, height))
-            using (var brhBack = new Gdi.SolidBrush(Gdi.Color.FromArgb(211, 211, 211)))
             using (var sWavePen = new Gdi.Pen(Gdi.Color.FromArgb(255, 0, 0), 2.0f))
             using (var pWavePen = new Gdi.Pen(Gdi.Color.FromArgb(0, 0, 255), 2.0f))
             {
-                using (var g = Gdi.Graphics.FromImage(tempBitmap))
+                using (var g = Gdi.Graphics.FromImage(m_canvasBitmap))
                 {
                     // Background
-                    g.FillRectangle(brhBack, 0, 0, width, height);
+                    g.Clear(Gdi.Color.FromArgb(211, 211, 211));
 
                     // Intensity
                     var mmiIterator = m_intensityGrid.GetEnumerator();
@@ -554,7 +565,7 @@ namespace PewsClient
                     }
                 }
 
-                var hbmp = tempBitmap.GetHbitmap();
+                var hbmp = m_canvasBitmap.GetHbitmap();
                 try
                 {
                     var options = BitmapSizeOptions.FromEmptyOptions();
