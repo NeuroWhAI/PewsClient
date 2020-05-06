@@ -53,7 +53,7 @@ namespace PewsClient
         private Gdi.Image m_imgMap = null;
 
         private Brush[] m_mmiWpfBrushes = null;
-        private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xee, 0x00, 0x00));
+        private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xff, 0x10, 0x00));
         private Brush m_newsHeaderBrush = new SolidColorBrush(Color.FromRgb(0xff, 0xab, 0x00));
         private Brush m_newsBackBrush = new SolidColorBrush(Color.FromRgb(0xff, 0xd5, 0x4f));
         private Brush m_notiHeaderBrush = new SolidColorBrush(Color.FromRgb(0x29, 0xb6, 0xf6));

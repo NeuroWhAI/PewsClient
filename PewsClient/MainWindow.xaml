@@ -55,7 +55,7 @@
                 </WrapPanel>
             </StackPanel>
         </Grid>
-        <Grid Background="Gray">
+        <Grid Background="#233062">
             <Image x:Name="canvas" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"></Image>
             <WrapPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                 <!-- 우하단 -->
@@ -66,8 +66,8 @@
                         </Style>
                     </StackPanel.Resources>
                     <StackPanel Orientation="Horizontal" >
-                        <TextBlock Foreground="#EE0000">강:</TextBlock>
-                        <TextBlock x:Name="txtHighStn" Foreground="#EE0000" Margin="4,0">0</TextBlock>
+                        <TextBlock Foreground="#FF1000">강:</TextBlock>
+                        <TextBlock x:Name="txtHighStn" Foreground="#FF1000" Margin="4,0">0</TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Foreground="Yellow">중:</TextBlock>
@@ -92,10 +92,10 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock VerticalAlignment="Center" Padding="4,2" Background="SlateGray" Foreground="White">계측진도</TextBlock>
+                    <TextBlock VerticalAlignment="Center" Padding="4,2" Background="DimGray" Foreground="White">계측진도</TextBlock>
                     <TextBlock x:Name="txtEqkMmi" Grid.Row="1" VerticalAlignment="Center" TextAlignment="Center" Padding="2"
                                 FontSize="28" FontWeight="Bold" Foreground="Black">Ⅵ</TextBlock>
-                    <Border Grid.RowSpan="2" BorderThickness="1" BorderBrush="Gray"></Border>
+                    <Border Grid.RowSpan="2" BorderThickness="1" BorderBrush="SlateGray"></Border>
                 </Grid>
             </StackPanel>
             <StackPanel Margin="2" VerticalAlignment="Bottom">
