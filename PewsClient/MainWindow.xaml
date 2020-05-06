@@ -20,13 +20,13 @@
                 <CheckBox x:Name="chkPin" Checked="CheckBoxPin_Changed" Unchecked="CheckBoxPin_Changed">UI 고정</CheckBox>
             </StatusBarItem>
         </StatusBar>
-        <Grid x:Name="boxEqkInfo" DockPanel.Dock="Top" Background="#FF3F3F">
+        <Grid x:Name="boxEqkInfo" DockPanel.Dock="Top" Background="#B3E5FC">
             <!-- 상단 -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <WrapPanel x:Name="boxEqkInfoHeader" Background="Red">
+            <WrapPanel x:Name="boxEqkInfoHeader" Background="#29B6F6">
                 <TextBlock x:Name="txtEqkNotiKind" Margin="4,2,10,2" FontSize="13">지진알림종류</TextBlock>
                 <TextBlock x:Name="txtEqkDate" Margin="4,2,10,2" FontSize="13">0000-00-00</TextBlock>
                 <TextBlock x:Name="txtEqkTime" Margin="4,2,10,2" FontSize="13">00:00:00</TextBlock>

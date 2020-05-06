@@ -54,9 +54,10 @@ namespace PewsClient
 
         private Brush[] m_mmiWpfBrushes = null;
         private Brush m_redBrush = new SolidColorBrush(Color.FromRgb(0xee, 0x00, 0x00));
-        private Brush m_newsHeaderBrush = new SolidColorBrush(Color.FromRgb(0xff, 0x3f, 0x3f));
-        private Brush m_notiHeaderBrush = new SolidColorBrush(Color.FromRgb(0x02, 0x53, 0x73));
-        private Brush m_notiBackBrush = new SolidColorBrush(Color.FromRgb(0x03, 0x70, 0x9b));
+        private Brush m_newsHeaderBrush = new SolidColorBrush(Color.FromRgb(0xff, 0xab, 0x00));
+        private Brush m_newsBackBrush = new SolidColorBrush(Color.FromRgb(0xff, 0xd5, 0x4f));
+        private Brush m_notiHeaderBrush = new SolidColorBrush(Color.FromRgb(0x29, 0xb6, 0xf6));
+        private Brush m_notiBackBrush = new SolidColorBrush(Color.FromRgb(0xb3, 0xe5, 0xfc));
 
         private Style m_newsTextStyle = null;
         private Style m_notiTextStyle = null;
@@ -421,9 +422,9 @@ namespace PewsClient
                 .ToArray();
 
             m_newsTextStyle = new Style(typeof(TextBlock));
-            m_newsTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Yellow));
+            m_newsTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Black));
             m_notiTextStyle = new Style(typeof(TextBlock));
-            m_notiTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.White));
+            m_notiTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Black));
 
             m_wavBeep.Open(new Uri("res/beep.mp3", UriKind.Relative));
             m_wavBeep1.Open(new Uri("res/beep1.mp3", UriKind.Relative));
@@ -591,13 +592,17 @@ namespace PewsClient
 
             if (phase < 3)
             {
+                // 속보.
+
                 boxEqkInfoHeader.Background = m_newsHeaderBrush;
-                boxEqkInfo.Background = Brushes.Red;
+                boxEqkInfo.Background = m_newsBackBrush;
 
                 style = m_newsTextStyle;
             }
             else
             {
+                // 통보.
+
                 boxEqkInfoHeader.Background = m_notiHeaderBrush;
                 boxEqkInfo.Background = m_notiBackBrush;
 
