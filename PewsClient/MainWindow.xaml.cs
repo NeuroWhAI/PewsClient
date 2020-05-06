@@ -16,6 +16,8 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Net;
 using System.Globalization;
+using System.IO;
+
 using Gdi = System.Drawing;
 
 namespace PewsClient
@@ -69,8 +71,8 @@ namespace PewsClient
         private MediaPlayer m_wavBeep3 = new MediaPlayer();
         private MediaPlayer m_wavNormal = new MediaPlayer();
         private MediaPlayer m_wavHigh = new MediaPlayer();
-        private MediaPlayer m_wavUpdate = new MediaPlayer();
         private MediaPlayer m_wavEnd = new MediaPlayer();
+        private MediaPlayer[] m_wavUpdate = new MediaPlayer[11];
 
         private DispatcherTimer m_timer = new DispatcherTimer();
         private DispatcherTimer m_timerBeep = new DispatcherTimer();
@@ -315,8 +317,11 @@ namespace PewsClient
                             m_maxMmi = maxMmi;
                             UpdateEqkMmiPanel(maxMmi);
 
-                            m_wavUpdate.Stop();
-                            m_wavUpdate.Play();
+                            if (maxMmi >= 0 && maxMmi < m_wavUpdate.Length)
+                            {
+                                m_wavUpdate[maxMmi].Stop();
+                                m_wavUpdate[maxMmi].Play();
+                            }
                         }
                         if (maxMmi >= 2)
                         {
@@ -432,8 +437,22 @@ namespace PewsClient
             m_wavBeep3.Open(new Uri("res/beep3.mp3", UriKind.Relative));
             m_wavNormal.Open(new Uri("res/normal.mp3", UriKind.Relative));
             m_wavHigh.Open(new Uri("res/high.mp3", UriKind.Relative));
-            m_wavUpdate.Open(new Uri("res/update.mp3", UriKind.Relative));
             m_wavEnd.Open(new Uri("res/end.mp3", UriKind.Relative));
+            m_wavUpdate[0] = new MediaPlayer();
+            m_wavUpdate[0].Open(new Uri("res/update.mp3", UriKind.Relative));
+            for (int mmi = 1; mmi < m_wavUpdate.Length; ++mmi)
+            {
+                string wavPath = $"res/update{mmi}.mp3";
+                if (File.Exists(wavPath))
+                {
+                    m_wavUpdate[mmi] = new MediaPlayer();
+                    m_wavUpdate[mmi].Open(new Uri(wavPath, UriKind.Relative));
+                }
+                else
+                {
+                    m_wavUpdate[mmi] = m_wavUpdate[0];
+                }
+            }
 
             m_wavBeep.Volume = 0.25;
             m_wavBeep1.Volume = 0.25;
