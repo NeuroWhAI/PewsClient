@@ -52,6 +52,7 @@ namespace PewsClient
         private DateTime m_simEndTime = DateTime.MinValue;
 
         private Gdi.Brush[] m_mmiBrushes = null;
+        private Gdi.Pen[] m_mmiStagePens = null;
         private Gdi.Image m_imgMap = null;
         private Gdi.Bitmap m_canvasBitmap = null;
 
@@ -97,6 +98,7 @@ namespace PewsClient
         private bool m_updateGrid = false;
 
         private int m_maxMmi = 1;
+        private List<List<int>> m_stnClusters = new List<List<int>>();
 
         //#############################################################################################
 
@@ -308,7 +310,7 @@ namespace PewsClient
                     // 관측소 데이터가 있으면 관측소 진도 분석.
                     if (m_stations.Count > 0)
                     {
-                        HandleMmi(body);
+                        HandleMmi(body, phase);
 
                         // 강도별 관측소 수.
                         txtHighStn.Text = m_stations.Count((stn) => (stn.Mmi >= 5)).ToString();
@@ -351,6 +353,7 @@ namespace PewsClient
                         m_beepLevel = 0;
                         m_maxMmi = 1;
                         UpdateEqkMmiPanel(-1);
+                        m_stnClusters.Clear();
                     }
                 }
 
@@ -443,6 +446,12 @@ namespace PewsClient
             m_mmiBrushes = mmiColors
                 .Select((color) => new Gdi.SolidBrush(color))
                 .ToArray();
+            m_mmiStagePens = new Gdi.Pen[]
+            {
+                new Gdi.Pen(Gdi.Color.Green, 3.5f),
+                new Gdi.Pen(Gdi.Color.Yellow, 3.5f),
+                new Gdi.Pen(Gdi.Color.FromArgb(0xff, 0x10, 0x00), 3.5f),
+            };
             m_imgMap = Gdi.Image.FromFile("res/map.png");
             m_canvasBitmap = new Gdi.Bitmap(m_imgMap.Width, m_imgMap.Height);
 
@@ -485,6 +494,8 @@ namespace PewsClient
 
         private void DrawCanvas()
         {
+            const float ClusterPadding = 8.0f;
+
             if (m_imgMap == null || dock.ActualWidth < 1)
             {
                 return;
@@ -521,8 +532,8 @@ namespace PewsClient
                             if (mmi >= 0 && mmi < m_mmiBrushes.Length)
                             {
                                 var brush = m_mmiBrushes[mmi];
-                                float x = (float)((j - 124.5) * 113 - 4);
-                                float y = (float)((38.9 - i) * 138.4 - 7);
+                                float x = (float)(LonToX(j) - 4);
+                                float y = (float)(LatToY(i) - 7);
 
                                 g.FillRectangle(brush, x, y, 8, 8);
                             }
@@ -544,11 +555,83 @@ namespace PewsClient
                         if (mmi >= 0 && mmi < m_mmiBrushes.Length)
                         {
                             var brush = m_mmiBrushes[mmi];
-                            float x = (float)((stn.Longitude - 124.5) * 113 - 4);
-                            float y = (float)((38.9 - stn.Latitude) * 138.4 - 4);
+                            float x = (float)(LonToX(stn.Longitude) - 4);
+                            float y = (float)(LatToY(stn.Latitude) - 4);
 
                             g.FillRectangle(brush, x, y, 10, 10);
                             g.DrawRectangle(Gdi.Pens.Black, x, y, 10, 10);
+                        }
+                    }
+
+                    // Cluster
+                    foreach (var cluster in m_stnClusters)
+                    {
+                        bool bInit = true;
+                        float left = 0, right = 0, top = 0, bottom = 0;
+                        int maxMmi = -1;
+
+                        foreach (int stnIdx in cluster)
+                        {
+                            if (stnIdx < 0 || stnIdx >= m_stations.Count)
+                            {
+                                // 관측소 번호에 오류가 있으므로 클러스터 무시.
+                                break;
+                            }
+
+                            var stn = m_stations[stnIdx];
+                            float x = (float)LonToX(stn.Longitude);
+                            float y = (float)LatToY(stn.Latitude);
+
+                            if (stn.Mmi > maxMmi)
+                            {
+                                maxMmi = stn.Mmi;
+                            }
+
+                            if (bInit)
+                            {
+                                bInit = false;
+                                left = x;
+                                right = x;
+                                top = y;
+                                bottom = y;
+                            }
+                            else
+                            {
+                                if (x < left)
+                                {
+                                    left = x;
+                                }
+                                else if (x > right)
+                                {
+                                    right = x;
+                                }
+
+                                if (y < top)
+                                {
+                                    top = y;
+                                }
+                                else if (y > bottom)
+                                {
+                                    bottom = y;
+                                }
+                            }
+                        }
+
+                        if (maxMmi >= 0)
+                        {
+                            int mmiStage = 0;
+                            if (maxMmi >= 5)
+                            {
+                                mmiStage = 2;
+                            }
+                            else if (maxMmi >= 3)
+                            {
+                                mmiStage = 1;
+                            }
+
+                            g.DrawRectangle(m_mmiStagePens[mmiStage],
+                                left - ClusterPadding, top - ClusterPadding,
+                                right - left + ClusterPadding * 2, bottom - top + ClusterPadding * 2);
                         }
                     }
 
@@ -766,9 +849,7 @@ namespace PewsClient
                 }
             }
 
-            m_epicenter = new Gdi.PointF(
-                (float)((origLon - 124.5) * 113 - 4),
-                (float)((38.9 - origLat) * 138.4 - 7));
+            m_epicenter = new Gdi.PointF((float)LonToX(origLon) - 4, (float)LatToY(origLat) - 7);
             m_waveTick = (float)(((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - m_tide) / 1000.0 - eqkUnixTime) * 3000.0 / 772.5);
 
             if (phase < 3)
@@ -825,6 +906,7 @@ namespace PewsClient
                 return;
             }
 
+            m_stnClusters.Clear();
             m_stations.Clear();
             for (int i = 0; i < stnLat.Count; ++i)
             {
@@ -839,8 +921,11 @@ namespace PewsClient
             m_stationUpdate = false;
         }
 
-        private void HandleMmi(string body)
+        private void HandleMmi(string body, int phase)
         {
+            const double ClusterDistance = 50.0;
+            const int MinClusterSize = 3;
+
             if (m_stations.Count <= 0)
             {
                 return;
@@ -872,6 +957,73 @@ namespace PewsClient
                 int mmi = mmiData[i];
 
                 stn.Mmi = mmi;
+            }
+
+            // 클러스터 분석.
+            m_stnClusters.Clear();
+            if (phase <= 1)
+            {
+                bool[] visited = new bool[m_stations.Count];
+                for (int i = 0; i < m_stations.Count; ++i)
+                {
+                    if (visited[i])
+                    {
+                        continue;
+                    }
+
+                    var clusterStn = new List<int>();
+
+                    var leftStns = new Queue<int>();
+                    leftStns.Enqueue(i);
+
+                    while (leftStns.Count > 0)
+                    {
+                        int current = leftStns.Dequeue();
+
+                        if (visited[current])
+                        {
+                            continue;
+                        }
+                        visited[current] = true;
+
+                        var stn = m_stations[current];
+                        int mmi = stn.Mmi;
+
+                        if (mmi < 2)
+                        {
+                            continue;
+                        }
+
+                        clusterStn.Add(current);
+
+                        double centerX = LonToX(stn.Longitude);
+                        double centerY = LatToY(stn.Latitude);
+
+                        for (int next = 0; next < m_stations.Count; ++next)
+                        {
+                            if (visited[next])
+                            {
+                                continue;
+                            }
+
+                            var nextStn = m_stations[next];
+
+                            double subX = LonToX(nextStn.Longitude) - centerX;
+                            double subY = LatToY(nextStn.Latitude) - centerY;
+
+                            double distanceSqr = subX * subX + subY + subY;
+                            if (distanceSqr < ClusterDistance * ClusterDistance)
+                            {
+                                leftStns.Enqueue(next);
+                            }
+                        }
+                    }
+
+                    if (clusterStn.Count >= MinClusterSize)
+                    {
+                        m_stnClusters.Add(clusterStn);
+                    }
+                }
             }
         }
 
@@ -914,6 +1066,16 @@ namespace PewsClient
         }
 
         //#############################################################################################
+
+        private double LonToX(double longitude)
+        {
+            return (longitude - 124.5) * 113;
+        }
+
+        private double LatToY(double latitude)
+        {
+            return (38.9 - latitude) * 138.4;
+        }
 
         private Gdi.Color HexCodeToColor(string code)
         {
