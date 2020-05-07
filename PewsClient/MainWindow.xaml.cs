@@ -44,6 +44,7 @@ namespace PewsClient
 
             HideEqkInfo();
             HideEqkMmi();
+            HideWarningHint();
 
             txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
         }
@@ -314,6 +315,10 @@ namespace PewsClient
                         int maxMmi = HandleMmi(body, phase);
 
 
+                        // 경고 힌트 갱신.
+                        UpdateWarningHint(m_stations);
+
+
                         // 강도별 관측소 수.
                         txtHighStn.Text = m_stations.Count((stn) => (stn.Mmi >= 5)).ToString();
                         txtMidStn.Text = m_stations.Count((stn) => (stn.Mmi >= 3 && stn.Mmi <= 4)).ToString();
@@ -416,6 +421,7 @@ namespace PewsClient
                         m_maxMmi = 1;
                         UpdateEqkMmiPanel(-1);
                         m_stnClusters.Clear();
+                        HideWarningHint();
                     }
                 }
 
@@ -494,6 +500,7 @@ namespace PewsClient
             {
                 ShowEqkInfo();
                 ShowEqkMmi();
+                ShowWarningHint();
             }
         }
 
@@ -897,6 +904,50 @@ namespace PewsClient
             lblLevel.Foreground = lvlBrush;
             txtLevel.Foreground = lvlBrush;
             txtLevel.Text = Math.Ceiling(level).ToString("F0");
+        }
+
+        private void ShowWarningHint()
+        {
+            boxWarningHint.Visibility = Visibility.Visible;
+        }
+
+        private void HideWarningHint()
+        {
+            if (chkPin.IsChecked != true)
+            {
+                boxWarningHint.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                boxWarningHint.BorderBrush = Brushes.Gray;
+                txtWarningHint.Foreground = Brushes.Gray;
+                txtWarningHint.Text = "IDLE";
+            }
+        }
+
+        private void UpdateWarningHint(List<PewsStation> stations)
+        {
+            int warningCnt = stations.Count((s) => s.Mmi >= 5);
+            if (warningCnt >= 2)
+            {
+                boxWarningHint.BorderBrush = m_redBrush;
+                txtWarningHint.Foreground = m_redBrush;
+                txtWarningHint.Text = "WARNING";
+                ShowWarningHint();
+                return;
+            }
+            
+            int cautionCnt = stations.Count((s) => s.Mmi >= 3 && s.Mmi <= 4);
+            if (cautionCnt >= 2)
+            {
+                boxWarningHint.BorderBrush = Brushes.Yellow;
+                txtWarningHint.Foreground = Brushes.Yellow;
+                txtWarningHint.Text = "CAUTION";
+                ShowWarningHint();
+                return;
+            }
+            
+            HideWarningHint();
         }
 
         //#############################################################################################
