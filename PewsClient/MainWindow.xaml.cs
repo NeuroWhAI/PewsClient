@@ -99,14 +99,15 @@ namespace PewsClient
 
         private int m_maxMmi = 1;
         private List<List<int>> m_stnClusters = new List<List<int>>();
+        private readonly int MinClusterSize = 3;
 
         //#############################################################################################
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
-            StartSimulation("2016000291", "20160912203254"); // 경주 5.8
+            StartSimulation("2017000407", "20171115142931"); // 포항 5.4
+            //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
 #endif
 
             LoadResources();
@@ -310,27 +311,87 @@ namespace PewsClient
                     // 관측소 데이터가 있으면 관측소 진도 분석.
                     if (m_stations.Count > 0)
                     {
-                        HandleMmi(body, phase);
+                        int maxMmi = HandleMmi(body, phase);
+
 
                         // 강도별 관측소 수.
                         txtHighStn.Text = m_stations.Count((stn) => (stn.Mmi >= 5)).ToString();
                         txtMidStn.Text = m_stations.Count((stn) => (stn.Mmi >= 3 && stn.Mmi <= 4)).ToString();
                         txtLowStn.Text = m_stations.Count((stn) => (stn.Mmi == 2)).ToString();
 
-                        // 계측진도 계산 및 표시.
-                        int maxMmi = m_stations.Max((stn) => stn.Mmi);
+
+                        // 계측진도를 띄우거나 갱신할지 여부 결정.
+                        bool eqkMayOccured = (maxMmi > 3);
+                        if (!eqkMayOccured)
+                        {
+                            // 전체 최대진도와 작은 클러스터를 무시한 최대진도는 다를 수 있으므로 확인.
+                            int maxClusterMmi = 0;
+                            foreach (var cluster in m_stnClusters)
+                            {
+                                if (cluster.Count < 2)
+                                {
+                                    continue;
+                                }
+
+                                int clusterMmi = -1;
+                                foreach (int stnIdx in cluster)
+                                {
+                                    if (stnIdx < 0 || stnIdx >= m_stations.Count)
+                                    {
+                                        // 관측소 번호에 오류가 있으므로 클러스터 무시.
+                                        clusterMmi = -1;
+                                        break;
+                                    }
+
+                                    var stn = m_stations[stnIdx];
+                                    if (stn.Mmi >= maxMmi)
+                                    {
+                                        // 최대진도와 같다는 것을 확인하였으니 바로 탈출.
+                                        clusterMmi = stn.Mmi;
+                                        break;
+                                    }
+                                    else if (stn.Mmi > clusterMmi)
+                                    {
+                                        clusterMmi = stn.Mmi;
+                                    }
+                                }
+
+                                if (clusterMmi >= maxMmi)
+                                {
+                                    // 최대진도와 같다는 것을 확인하였으니 바로 탈출.
+                                    maxClusterMmi = clusterMmi;
+                                    break;
+                                }
+                                else if (clusterMmi > maxClusterMmi)
+                                {
+                                    maxClusterMmi = clusterMmi;
+                                }
+                            }
+
+                            maxMmi = maxClusterMmi;
+                            if (maxClusterMmi >= 2)
+                            {
+                                eqkMayOccured = true;
+                            }
+                        }
+
+                        // 계측진도 표시.
                         if (maxMmi > m_maxMmi)
                         {
                             m_maxMmi = maxMmi;
                             UpdateEqkMmiPanel(maxMmi);
 
-                            if (maxMmi >= 0 && maxMmi < m_wavUpdate.Length)
+                            // 갱신 소리 재생.
+                            // 단, 지진일 확률이 인정되는 경우에만.
+                            if (eqkMayOccured
+                                && maxMmi >= 0 && maxMmi < m_wavUpdate.Length)
                             {
                                 m_wavUpdate[maxMmi].Stop();
                                 m_wavUpdate[maxMmi].Play();
                             }
                         }
-                        if (maxMmi >= 2)
+
+                        if (eqkMayOccured)
                         {
                             ShowEqkMmi();
                         }
@@ -338,6 +399,7 @@ namespace PewsClient
                         {
                             HideEqkMmi();
                         }
+
 
                         // 진도 종합 레벨 계산.
                         double level = 0;
@@ -577,6 +639,11 @@ namespace PewsClient
                     // Cluster
                     foreach (var cluster in m_stnClusters)
                     {
+                        if (cluster.Count < MinClusterSize)
+                        {
+                            continue;
+                        }
+
                         bool bInit = true;
                         float left = 0, right = 0, top = 0, bottom = 0;
                         int maxMmi = -1;
@@ -948,14 +1015,15 @@ namespace PewsClient
             m_stationUpdate = false;
         }
 
-        private void HandleMmi(string body, int phase)
+        private int HandleMmi(string body, int phase)
         {
             const double ClusterDistance = 50.0;
-            const int MinClusterSize = 3;
+
+            int maxMmi = 0;
 
             if (m_stations.Count <= 0)
             {
-                return;
+                return maxMmi;
             }
 
             var mmiData = new List<int>();
@@ -974,7 +1042,7 @@ namespace PewsClient
 
             if (mmiData.Count < m_stations.Count)
             {
-                return;
+                return maxMmi;
             }
 
             // 관측소 진도 갱신.
@@ -984,6 +1052,11 @@ namespace PewsClient
                 int mmi = mmiData[i];
 
                 stn.Mmi = mmi;
+
+                if (mmi > maxMmi)
+                {
+                    maxMmi = mmi;
+                }
             }
 
             // 클러스터 분석.
@@ -1046,12 +1119,11 @@ namespace PewsClient
                         }
                     }
 
-                    if (clusterStn.Count >= MinClusterSize)
-                    {
-                        m_stnClusters.Add(clusterStn);
-                    }
+                    m_stnClusters.Add(clusterStn);
                 }
             }
+
+            return maxMmi;
         }
 
         private async Task RequestGridData(string eqkId, int phase)
