@@ -71,9 +71,9 @@ namespace PewsClient
         private MediaPlayer m_wavBeep1 = new MediaPlayer();
         private MediaPlayer m_wavBeep2 = new MediaPlayer();
         private MediaPlayer m_wavBeep3 = new MediaPlayer();
-        private MediaPlayer m_wavNormal = new MediaPlayer();
-        private MediaPlayer m_wavHigh = new MediaPlayer();
         private MediaPlayer m_wavEnd = new MediaPlayer();
+        private MediaPlayer[] m_wavNormal = new MediaPlayer[11];
+        private MediaPlayer[] m_wavHigh = new MediaPlayer[11];
         private MediaPlayer[] m_wavUpdate = new MediaPlayer[11];
 
         private Stopwatch m_tickStopwatch = new Stopwatch();
@@ -455,37 +455,48 @@ namespace PewsClient
             m_imgMap = Gdi.Image.FromFile("res/map.png");
             m_canvasBitmap = new Gdi.Bitmap(m_imgMap.Width, m_imgMap.Height);
 
+
             m_mmiWpfBrushes = mmiColors
                 .Select((color) => new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)))
                 .ToArray();
+
 
             m_newsTextStyle = new Style(typeof(TextBlock));
             m_newsTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Black));
             m_notiTextStyle = new Style(typeof(TextBlock));
             m_notiTextStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Black));
 
+
+            Action<string, Action<int, MediaPlayer>> loadWavForEachMmi = (name, callback) =>
+            {
+                var first = new MediaPlayer();
+                first.Open(new Uri($"res/{name}.mp3", UriKind.Relative));
+                callback(0, first);
+
+                for (int mmi = 1; mmi <= 10; ++mmi)
+                {
+                    string wavPath = $"res/{name}{mmi}.mp3";
+                    if (File.Exists(wavPath))
+                    {
+                        var player = new MediaPlayer();
+                        player.Open(new Uri(wavPath, UriKind.Relative));
+                        callback(mmi, player);
+                    }
+                    else
+                    {
+                        callback(mmi, first);
+                    }
+                }
+            };
+
             m_wavBeep.Open(new Uri("res/beep.mp3", UriKind.Relative));
             m_wavBeep1.Open(new Uri("res/beep1.mp3", UriKind.Relative));
             m_wavBeep2.Open(new Uri("res/beep2.mp3", UriKind.Relative));
             m_wavBeep3.Open(new Uri("res/beep3.mp3", UriKind.Relative));
-            m_wavNormal.Open(new Uri("res/normal.mp3", UriKind.Relative));
-            m_wavHigh.Open(new Uri("res/high.mp3", UriKind.Relative));
             m_wavEnd.Open(new Uri("res/end.mp3", UriKind.Relative));
-            m_wavUpdate[0] = new MediaPlayer();
-            m_wavUpdate[0].Open(new Uri("res/update.mp3", UriKind.Relative));
-            for (int mmi = 1; mmi < m_wavUpdate.Length; ++mmi)
-            {
-                string wavPath = $"res/update{mmi}.mp3";
-                if (File.Exists(wavPath))
-                {
-                    m_wavUpdate[mmi] = new MediaPlayer();
-                    m_wavUpdate[mmi].Open(new Uri(wavPath, UriKind.Relative));
-                }
-                else
-                {
-                    m_wavUpdate[mmi] = m_wavUpdate[0];
-                }
-            }
+            loadWavForEachMmi("normal", (mmi, player) => m_wavNormal[mmi] = player);
+            loadWavForEachMmi("high", (mmi, player) => m_wavHigh[mmi] = player);
+            loadWavForEachMmi("update", (mmi, player) => m_wavUpdate[mmi] = player);
 
             m_wavBeep.Volume = 0.25;
             m_wavBeep1.Volume = 0.25;
@@ -870,8 +881,16 @@ namespace PewsClient
                 {
                     // 발생 시각, 규모, 최대 진도, 문구 정도는 부정확할 수 있어도 첫 정보에 포함되는 듯.
 
-                    m_wavHigh.Stop();
-                    m_wavHigh.Play();
+                    if (eqkIntens >= 0 && eqkIntens < m_wavHigh.Length)
+                    {
+                        m_wavHigh[eqkIntens].Stop();
+                        m_wavHigh[eqkIntens].Play();
+                    }
+                    else
+                    {
+                        m_wavHigh[0].Stop();
+                        m_wavHigh[0].Play();
+                    }
 
                     m_prevAlarmId = alarmId;
                 }
@@ -879,8 +898,16 @@ namespace PewsClient
                 {
                     // 분석 완료된 것 같고 깊이, 영향 지역이 나옴.
 
-                    m_wavNormal.Stop();
-                    m_wavNormal.Play();
+                    if (eqkIntens >= 0 && eqkIntens < m_wavNormal.Length)
+                    {
+                        m_wavNormal[eqkIntens].Stop();
+                        m_wavNormal[eqkIntens].Play();
+                    }
+                    else
+                    {
+                        m_wavNormal[0].Stop();
+                        m_wavNormal[0].Play();
+                    }
 
                     m_prevAlarmId = alarmId;
                 }
