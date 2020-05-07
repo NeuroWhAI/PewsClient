@@ -1070,7 +1070,7 @@ namespace PewsClient
 
         private int HandleMmi(string body, int phase)
         {
-            const double ClusterDistance = 50.0;
+            const double ClusterDistance = 40.0;
 
             int maxMmi = 0;
 
