@@ -736,7 +736,7 @@ namespace PewsClient
             boxEqkInfo.Resources.Remove(typeof(TextBlock));
             boxEqkInfo.Resources.Add(typeof(TextBlock), style);
 
-            txtEqkNotiKind.Text = (phase < 3) ? "긴급지진속보" : "지진정보";
+            txtEqkNotiKind.Text = (phase < 3) ? "신속정보" : "상세정보";
             txtEqkDate.Text = time.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             txtEqkTime.Text = time.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
 
