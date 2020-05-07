@@ -26,7 +26,7 @@ namespace PewsClient
 
         private static readonly string[] MmiString =
         {
-            "Ⅰ-", "Ⅰ", "Ⅱ", "Ⅳ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", "Ⅻ+"
+            "Ⅰ-", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", "Ⅻ+"
         };
 
         public static int ConvertPgaToMMI(double pga)
