@@ -101,6 +101,7 @@ namespace PewsClient
         private int m_maxMmi = 1;
         private List<List<int>> m_stnClusters = new List<List<int>>();
         private readonly int MinClusterSize = 3;
+        private readonly double ClusterDistance = 40.0;
 
         //#############################################################################################
 
@@ -1065,14 +1066,36 @@ namespace PewsClient
                 });
             }
 
+            // 인근 관측소 목록 생성.
+            for (int i = 0; i < m_stations.Count; ++i)
+            {
+                var center = m_stations[i];
+
+                double centerX = LonToX(center.Longitude);
+                double centerY = LatToY(center.Latitude);
+
+                for (int j = i + 1; j < m_stations.Count; ++j)
+                {
+                    var other = m_stations[j];
+
+                    double subX = LonToX(other.Longitude) - centerX;
+                    double subY = LatToY(other.Latitude) - centerY;
+
+                    double distanceSqr = subX * subX + subY + subY;
+                    if (distanceSqr < ClusterDistance * ClusterDistance)
+                    {
+                        center.Nodes.Add(j);
+                        other.Nodes.Add(i);
+                    }
+                }
+            }
+
             // 다음 업데이트 신호 대기.
             m_stationUpdate = false;
         }
 
         private int HandleMmi(string body, int phase)
         {
-            const double ClusterDistance = 40.0;
-
             int maxMmi = 0;
 
             if (m_stations.Count <= 0)
@@ -1134,10 +1157,6 @@ namespace PewsClient
                     {
                         int current = leftStns.Dequeue();
 
-                        if (visited[current])
-                        {
-                            continue;
-                        }
                         visited[current] = true;
 
                         var stn = m_stations[current];
@@ -1150,26 +1169,14 @@ namespace PewsClient
 
                         clusterStn.Add(current);
 
-                        double centerX = LonToX(stn.Longitude);
-                        double centerY = LatToY(stn.Latitude);
-
-                        for (int next = 0; next < m_stations.Count; ++next)
+                        foreach (int next in stn.Nodes)
                         {
                             if (visited[next])
                             {
                                 continue;
                             }
 
-                            var nextStn = m_stations[next];
-
-                            double subX = LonToX(nextStn.Longitude) - centerX;
-                            double subY = LatToY(nextStn.Latitude) - centerY;
-
-                            double distanceSqr = subX * subX + subY + subY;
-                            if (distanceSqr < ClusterDistance * ClusterDistance)
-                            {
-                                leftStns.Enqueue(next);
-                            }
+                            leftStns.Enqueue(next);
                         }
                     }
 
