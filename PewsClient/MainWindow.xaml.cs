@@ -877,8 +877,9 @@ namespace PewsClient
             double scale = m_stations.Count / 150.0;
             Brush lvlBrush;
 
-            if (level < Earthquake.MMIToMinimumGal(2) * scale)
+            if (level < Earthquake.MMIToMinimumGal(2))
             {
+                // 진도 2가 하나라도 있으면 알림을 재생하도록 여긴 scale을 곱한 기준을 쓰지 않음.
                 m_beepLevel = 0;
                 lvlBrush = Brushes.White;
             }
