@@ -450,17 +450,17 @@ namespace PewsClient
             finally
             {
                 m_tickStopwatch.Stop();
-                var elapsed = m_tickStopwatch.Elapsed;
+                long elapsed = m_tickStopwatch.ElapsedMilliseconds;
 
                 if (bCheckLag)
                 {
-                    txtTickDelay.Text = $"Lag: {elapsed.TotalMilliseconds:F0}ms";
+                    txtTickDelay.Text = $"Lag: {elapsed}ms";
                 }
 
-                var leftDelay = TimeSpan.FromMilliseconds(100) - elapsed;
-                if (leftDelay.TotalMilliseconds > 0)
+                var leftDelay = 100L - elapsed;
+                if (leftDelay > 0)
                 {
-                    await Task.Delay(leftDelay);
+                    await Task.Delay(TimeSpan.FromMilliseconds(leftDelay));
                 }
 
                 m_timer.Start();
