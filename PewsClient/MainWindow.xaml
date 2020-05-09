@@ -38,12 +38,12 @@
             <StackPanel Grid.Row="1">
                 <TextBlock x:Name="txtEqkLoc" Margin="4,2,4,-2" FontSize="17" TextWrapping="Wrap">지진 발생 지역 정보</TextBlock>
                 <WrapPanel Orientation="Horizontal" Margin="4,0,4,2">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
                         <TextBlock FontSize="16" VerticalAlignment="Center">진도:</TextBlock>
                         <TextBlock x:Name="txtMmi" Margin="4,0,0,0" FontSize="20"
                                        VerticalAlignment="Center">-</TextBlock>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
                         <TextBlock FontSize="16" VerticalAlignment="Center">규모:</TextBlock>
                         <TextBlock x:Name="txtMag" Margin="4,0,2,0" FontSize="20"
                                    VerticalAlignment="Center">-</TextBlock>
