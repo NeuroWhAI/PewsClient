@@ -112,8 +112,8 @@ namespace PewsClient
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
-            //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
+            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            StartSimulation("2019003859", "20190419111643"); // 동해 4.3
 #endif
 
             LoadResources();
@@ -344,7 +344,7 @@ namespace PewsClient
 
 
                         // 계측진도를 띄우거나 갱신할지 여부 결정.
-                        bool eqkMayOccured = (maxMmi > 3);
+                        bool eqkMayOccured = (maxMmi > 3 || phase > 1);
                         if (!eqkMayOccured)
                         {
                             // 전체 최대진도와 작은 클러스터를 무시한 최대진도는 다를 수 있으므로 확인.
