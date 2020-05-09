@@ -61,38 +61,46 @@
         </Grid>
         <Grid Background="#233062">
             <Image x:Name="canvas" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"></Image>
-            <WrapPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                <!-- 우하단 -->
-                <Border x:Name="boxWarningHint" Width="120" Height="34" Margin="0,8,8,0"
-                        BorderThickness="2" BorderBrush="Gray"
-                        HorizontalAlignment="Right">
-                    <TextBlock x:Name="txtWarningHint" FontSize="20" TextAlignment="Center"
-                               Foreground="Gray" VerticalAlignment="Center">IDLE</TextBlock>
-                </Border>
-                <StackPanel Width="60" Margin="0,16,2,0" HorizontalAlignment="Right">
-                    <StackPanel.Resources>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="FontSize" Value="16"></Setter>
-                        </Style>
-                    </StackPanel.Resources>
-                    <StackPanel Orientation="Horizontal" >
-                        <TextBlock Foreground="#FF1000">강:</TextBlock>
-                        <TextBlock x:Name="txtHighStn" Foreground="#FF1000" Margin="4,0">0</TextBlock>
+            <Grid HorizontalAlignment="Right">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <WrapPanel Orientation="Vertical" HorizontalAlignment="Right">
+                    <!-- 우상단 -->
+                    <Border x:Name="boxWarningHint" Width="120" Height="34" Margin="4"
+                            BorderThickness="2" BorderBrush="Gray">
+                        <TextBlock x:Name="txtWarningHint" FontSize="20" TextAlignment="Center"
+                                   Foreground="Gray" VerticalAlignment="Center">IDLE</TextBlock>
+                    </Border>
+                </WrapPanel>
+                <WrapPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <!-- 우하단 -->
+                    <StackPanel Width="60" Margin="0,16,2,0" HorizontalAlignment="Right">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="16"></Setter>
+                            </Style>
+                        </StackPanel.Resources>
+                        <StackPanel Orientation="Horizontal" >
+                            <TextBlock Foreground="#FF1000">강:</TextBlock>
+                            <TextBlock x:Name="txtHighStn" Foreground="#FF1000" Margin="4,0">0</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="Yellow">중:</TextBlock>
+                            <TextBlock x:Name="txtMidStn" Foreground="Yellow" Margin="4,0">00</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="YellowGreen">약:</TextBlock>
+                            <TextBlock x:Name="txtLowStn" Foreground="YellowGreen" Margin="4,0">000</TextBlock>
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Foreground="Yellow">중:</TextBlock>
-                        <TextBlock x:Name="txtMidStn" Foreground="Yellow" Margin="4,0">00</TextBlock>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Foreground="YellowGreen">약:</TextBlock>
-                        <TextBlock x:Name="txtLowStn" Foreground="YellowGreen" Margin="4,0">000</TextBlock>
-                    </StackPanel>
-                </StackPanel>
-                <Image Source="pack://application:,,,/Resources/mmi bar.png"
-                       RenderOptions.BitmapScalingMode="HighQuality"
-                       Stretch="None" HorizontalAlignment="Right"
-                       Margin="0,16,0,0"></Image>
-            </WrapPanel>
+                    <Image Source="pack://application:,,,/Resources/mmi bar.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Stretch="None" HorizontalAlignment="Right"
+                           Margin="0,16,0,0"></Image>
+                </WrapPanel>
+            </Grid>
             <StackPanel Margin="2">
                 <!-- 좌상단 -->
                 <Grid x:Name="boxEqkMmi" Grid.Column="1"
