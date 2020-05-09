@@ -52,6 +52,7 @@ namespace PewsClient
         private bool m_simMode = false;
         private DateTime m_simEndTime = DateTime.MinValue;
 
+        private Gdi.Font m_mmiFont = new Gdi.Font(Gdi.SystemFonts.DefaultFont.FontFamily, 10.5f, Gdi.FontStyle.Bold);
         private Gdi.Brush[] m_mmiBrushes = null;
         private Gdi.Pen[] m_mmiStagePens = null;
         private Gdi.Image m_imgMap = null;
@@ -91,6 +92,7 @@ namespace PewsClient
 
         private bool m_stationUpdate = true;
         private List<PewsStation> m_stations = new List<PewsStation>();
+        private readonly TimeSpan MaxMmiLifetime = TimeSpan.FromSeconds(60);
 
         private Gdi.PointF m_epicenter = new Gdi.PointF(-100, -100);
         private float m_waveTick = 0;
@@ -109,8 +111,8 @@ namespace PewsClient
         {
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
-            StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
+            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
             //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
 #endif
 
@@ -257,6 +259,14 @@ namespace PewsClient
                             m_updateGrid = true;
                             await RequestGridData(eqkId, phase);
                         }
+
+                        if (phase != 2 && m_prevPhase != phase)
+                        {
+                            foreach (var stn in m_stations)
+                            {
+                                stn.ResetMaxMmi();
+                            }
+                        }
                     }
                     else
                     {
@@ -267,6 +277,11 @@ namespace PewsClient
 
                         if (m_prevPhase > 1)
                         {
+                            foreach (var stn in m_stations)
+                            {
+                                stn.ResetMaxMmi();
+                            }
+
                             m_wavEnd.Stop();
                             m_wavEnd.Play();
                         }
@@ -633,16 +648,40 @@ namespace PewsClient
                     g.DrawImage(m_imgMap, new Gdi.RectangleF(0, 0, m_imgMap.Width, m_imgMap.Height));
 
                     // Station
-                    foreach (var stn in m_stations)
+                    var stations = (m_prevPhase == 2 ? m_stations.OrderBy((s) => s.MaxMmi).AsEnumerable() : m_stations);
+                    foreach (var stn in stations)
                     {
-                        int mmi = stn.Mmi;
-                        if (mmi >= 0 && mmi < m_mmiBrushes.Length)
-                        {
-                            var brush = m_mmiBrushes[mmi];
-                            float x = (float)(LonToX(stn.Longitude) - 4);
-                            float y = (float)(LatToY(stn.Latitude) - 4);
+                        float x = (float)(LonToX(stn.Longitude) - 4);
+                        float y = (float)(LatToY(stn.Latitude) - 4);
 
-                            g.FillRectangle(brush, x, y, 10, 10);
+                        if (m_prevPhase == 2 && stn.MaxMmi >= 2)
+                        {
+                            // 지진 속보 시.
+                            int maxMmi = stn.MaxMmi;
+                            if (maxMmi >= 0 && maxMmi < m_mmiBrushes.Length)
+                            {
+                                var brush = m_mmiBrushes[maxMmi];
+                                var backBrush = (stn.MaxMmi >= 6 ? Gdi.Brushes.White : Gdi.Brushes.Black);
+                                var stringFormat = new Gdi.StringFormat
+                                {
+                                    Alignment = Gdi.StringAlignment.Center,
+                                    LineAlignment = Gdi.StringAlignment.Center,
+                                };
+
+                                g.FillEllipse(brush, x - 10, y - 10, 20, 20);
+                                g.DrawString(Earthquake.MMIToString(stn.MaxMmi), m_mmiFont,
+                                    backBrush, x + 0.5f, y + 0.5f, stringFormat);
+                            }
+                        }
+                        else
+                        {
+                            // 평시.
+                            int mmi = stn.Mmi;
+                            if (mmi >= 0 && mmi < m_mmiBrushes.Length)
+                            {
+                                var brush = m_mmiBrushes[mmi];
+                                g.FillRectangle(brush, x, y, 10, 10);
+                            }
                             g.DrawRectangle(Gdi.Pens.Black, x, y, 10, 10);
                         }
                     }
@@ -998,7 +1037,7 @@ namespace PewsClient
             string alarmId = eqkId + phase;
 
             // 페이즈가 넘어갔으며 이전에 전송한 것과 동일한 알람이 아니라면.
-            if (phase > m_prevPhase && alarmId != m_prevAlarmId)
+            if (phase != m_prevPhase && alarmId != m_prevAlarmId)
             {
                 if (phase == 2)
                 {
@@ -1129,7 +1168,7 @@ namespace PewsClient
                 var stn = m_stations[i];
                 int mmi = mmiData[i];
 
-                stn.Mmi = mmi;
+                stn.UpdateMmi(mmi, phase, MaxMmiLifetime);
 
                 if (mmi > maxMmi)
                 {
