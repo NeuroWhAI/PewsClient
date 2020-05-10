@@ -1178,7 +1178,7 @@ namespace PewsClient
 
             // 클러스터 분석.
             m_stnClusters.Clear();
-            if (phase <= 1)
+            if (phase != 2)
             {
                 bool[] visited = new bool[m_stations.Count];
                 for (int i = 0; i < m_stations.Count; ++i)
