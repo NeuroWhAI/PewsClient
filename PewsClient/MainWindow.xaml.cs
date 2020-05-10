@@ -1234,8 +1234,8 @@ namespace PewsClient
 
                 m_stations.Add(new PewsStation
                 {
-                    Name = info.Name,
-                    Location = info.Location,
+                    Name = string.IsNullOrEmpty(info.Name) ? $"IDX{i}" : info.Name,
+                    Location = string.IsNullOrEmpty(info.Location) ? $"{i + 1}번" : info.Location,
                     Latitude = stnLat[i],
                     Longitude = stnLon[i],
                 });

@@ -27,7 +27,7 @@ namespace PewsClient
         public int StationCount => m_stations.Count;
 
         private List<Station> m_stations = new List<Station>();
-        private readonly double AroundRadius = 4.0;
+        private readonly double AroundRadius = 24;
 
         public void LoadDatabase(string csvFile)
         {
@@ -76,19 +76,40 @@ namespace PewsClient
             double y = LatToY(latitude);
             double x = LonToX(longitude);
 
-            foreach (var stn in m_stations)
+            double minDistanceSqr = -1;
+            int minIndex = -1;
+
+            for (int i = 0; i < m_stations.Count; ++i)
             {
+                var stn = m_stations[i];
+
                 double subY = stn.Y - y;
                 double subX = stn.X - x;
 
                 double distanceSqr = subX * subX + subY * subY;
                 if (distanceSqr < AroundRadius * AroundRadius)
                 {
-                    return stn;
+                    if (minIndex < 0)
+                    {
+                        minIndex = i;
+                        minDistanceSqr = distanceSqr;
+                    }
+                    else if (minDistanceSqr > distanceSqr)
+                    {
+                        minIndex = i;
+                        minDistanceSqr = distanceSqr;
+                    }
                 }
             }
 
-            return Station.Empty;
+            if (minIndex < 0)
+            {
+                return Station.Empty;
+            }
+            else
+            {
+                return m_stations[minIndex];
+            }
         }
 
         private static double LonToX(double longitude)
