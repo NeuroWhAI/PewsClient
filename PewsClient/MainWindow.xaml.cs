@@ -1285,9 +1285,9 @@ namespace PewsClient
                 int prevMaxMmi = stn.MaxMmi;
                 stn.UpdateMmi(mmi, phase, MaxMmiLifetime);
 
-                // 지진 상황이고 관측소 최대진도가 바뀌었으며 그것이 2 이상일 때
+                // 속보 상황이고 관측소 최대진도가 바뀌었으며 그것이 2 이상일 때
                 // 해당 지역 계측진도 갱신.
-                if (phase > 1 && prevMaxMmi != stn.MaxMmi && stn.MaxMmi >= 2)
+                if (phase == 2 && prevMaxMmi != stn.MaxMmi && stn.MaxMmi >= 2)
                 {
                     UpdateMmiLocationList(stn.MaxMmi, stn.Name, stn.Location);
                 }
