@@ -1222,23 +1222,45 @@ namespace PewsClient
             ClearMmiLocationList();
             m_stnClusters.Clear();
             m_stations.Clear();
+
+            var stnNameSet = new HashSet<string>();
             for (int i = 0; i < stnLat.Count; ++i)
             {
                 var info = m_stationDb.GetStationInfoAround(stnLat[i], stnLon[i]);
 
+#if DEBUG
                 // NOTE: 과거와 현재 같은 관측소라도 위치가 미세하게 다른 경우 있으니 최근 것으로만 확인해야 함.
                 if (string.IsNullOrEmpty(info.Name))
                 {
-                    Debug.WriteLine($"Can not found a station in {stnLat[i]}, {stnLon[i]}.");
+                    Debug.WriteLine($"Can not found a station on {stnLat[i]}, {stnLon[i]}.");
                 }
+#endif
+
+                // 이름 충돌 대응.
+                string name = string.IsNullOrEmpty(info.Name) ? $"IDX{i}" : info.Name;
+                if (stnNameSet.Contains(name))
+                {
+                    name = $"{name}-{i}";
+                }
+                stnNameSet.Add(name);
 
                 m_stations.Add(new PewsStation
                 {
-                    Name = string.IsNullOrEmpty(info.Name) ? $"IDX{i}" : info.Name,
+                    Name = name,
                     Location = string.IsNullOrEmpty(info.Location) ? $"{i + 1}번" : info.Location,
                     Latitude = stnLat[i],
                     Longitude = stnLon[i],
                 });
+
+#if DEBUG
+                for (int j = 0; j < i; ++j)
+                {
+                    if (m_stations[j].Name == m_stations[i].Name)
+                    {
+                        Debug.WriteLine($"{m_stations[i].Name} 중복!");
+                    }
+                }
+#endif
             }
 
             // 인근 관측소 목록 생성.
