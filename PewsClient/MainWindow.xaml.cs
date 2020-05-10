@@ -127,9 +127,9 @@ namespace PewsClient
             m_stationDb.LoadDatabase("res/stations.csv");
 
 #if DEBUG
-            StartSimulation("2017000407", "20171115142931"); // 포항 5.4
+            //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
             //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
 #endif
 
@@ -1210,6 +1210,12 @@ namespace PewsClient
             for (int i = 0; i < stnLat.Count; ++i)
             {
                 var info = m_stationDb.GetStationInfoAround(stnLat[i], stnLon[i]);
+
+                // NOTE: 과거와 현재 같은 관측소라도 위치가 미세하게 다른 경우 있으니 최근 것으로만 확인해야 함.
+                if (string.IsNullOrEmpty(info.Name))
+                {
+                    Debug.WriteLine($"Can not found a station in {stnLat[i]}, {stnLon[i]}.");
+                }
 
                 m_stations.Add(new PewsStation
                 {
