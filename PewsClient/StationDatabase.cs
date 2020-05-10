@@ -9,8 +9,16 @@ namespace PewsClient
 {
     class StationDatabase
     {
-        private struct Station
+        public struct Station
         {
+            public static readonly Station Empty = new Station
+            {
+                Name = string.Empty,
+                Location = string.Empty,
+                Y = 0,
+                X = 0,
+            };
+
             public string Name;
             public string Location;
             public double Y, X;
@@ -63,7 +71,7 @@ namespace PewsClient
             }
         }
 
-        public string GetLocationAround(double latitude, double longitude)
+        public Station GetStationInfoAround(double latitude, double longitude)
         {
             double y = LatToY(latitude);
             double x = LonToX(longitude);
@@ -73,14 +81,14 @@ namespace PewsClient
                 double subY = stn.Y - y;
                 double subX = stn.X - x;
 
-                double distanceSqr = subX * subX + subY + subY;
+                double distanceSqr = subX * subX + subY * subY;
                 if (distanceSqr < AroundRadius * AroundRadius)
                 {
-                    return stn.Location;
+                    return stn;
                 }
             }
 
-            return string.Empty;
+            return Station.Empty;
         }
 
         private static double LonToX(double longitude)

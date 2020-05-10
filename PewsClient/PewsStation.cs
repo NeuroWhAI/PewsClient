@@ -9,6 +9,11 @@ namespace PewsClient
     class PewsStation
     {
         /// <summary>
+        /// 이름
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
         /// 지역
         /// </summary>
         public string Location { get; set; } = string.Empty;

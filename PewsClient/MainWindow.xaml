@@ -3,10 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:PewsClient"
         mc:Ignorable="d"
         Title="PEWS @ NeuroWhAI" Height="580" Width="480" MinHeight="350" MinWidth="250"
         Loaded="Window_Loaded" Closing="Window_Closing">
+    <Window.DataContext>
+        <local:MainWindowVM/>
+    </Window.DataContext>
     <DockPanel x:Name="dock">
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
@@ -100,6 +104,45 @@
                            Stretch="None" HorizontalAlignment="Right"
                            Margin="0,16,0,0"></Image>
                 </WrapPanel>
+                <Grid x:Name="boxStationLoc" Grid.Row="1" Width="120" Height="150" Margin="0,0,22,8"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <!-- 우하단 2 -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Background="#8000" Foreground="White" FontWeight="Bold" TextAlignment="Center">지역별 계측진도</TextBlock>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
+                                  Background="#8000" Focusable="False">
+                        <ScrollViewer.Resources>
+                            <ResourceDictionary>
+                                <ResourceDictionary.MergedDictionaries>
+                                    <ResourceDictionary Source="/PewsClient;component/ScrollBarStyle.xaml"/>
+                                </ResourceDictionary.MergedDictionaries>
+                            </ResourceDictionary>
+                        </ScrollViewer.Resources>
+                        <ItemsControl ItemsSource="{Binding MmiLocationsView}" BorderBrush="Transparent" Padding="0,4,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4,0,4,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="16" Height="16" Background="{Binding MmiBackBrush}">
+                                            <TextBlock Text="{Binding MmiString}" Foreground="{Binding MmiBrush}"
+                                                       TextAlignment="Center" VerticalAlignment="Center"
+                                                       FontWeight="Bold"></TextBlock>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Location}"
+                                                   VerticalAlignment="Center" Foreground="White" FontSize="12"
+                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"></TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
             <StackPanel Margin="2">
                 <!-- 좌상단 -->

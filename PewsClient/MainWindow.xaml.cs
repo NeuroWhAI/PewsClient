@@ -19,6 +19,8 @@ using System.Net;
 using System.Globalization;
 using System.IO;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace PewsClient
 {
@@ -40,14 +42,26 @@ namespace PewsClient
         {
             InitializeComponent();
 
+            if (DataContext is MainWindowVM vm)
+            {
+                m_mmiLocations = vm.MmiLocations;
+                m_mmiLocations.Clear();
+
+                m_mmiLocationsView = vm.MmiLocationsView;
+            }
+
             UpdateEqkMmiPanel(-1);
 
             HideEqkInfo();
             HideEqkMmi();
             HideWarningHint();
+            HideMmiLocationList();
 
             txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
         }
+
+        private ObservableCollection<StationInfoView> m_mmiLocations = null;
+        private ICollectionView m_mmiLocationsView = null;
 
         private bool m_simMode = false;
         private DateTime m_simEndTime = DateTime.MinValue;
@@ -249,6 +263,8 @@ namespace PewsClient
                         phase = 3;
                     }
 
+                    bool phaseChanged = (phase != m_prevPhase);
+
 
                     if (phase > 1)
                     {
@@ -257,13 +273,29 @@ namespace PewsClient
 
                         ShowEqkInfo();
 
-                        if (m_prevPhase != phase || m_updateGrid)
+                        // 속보 전환 시 지역별 계측진도 초기화.
+                        if (phase == 2 && phaseChanged)
+                        {
+                            ClearMmiLocationList();
+
+                            foreach (var stn in m_stations)
+                            {
+                                if (stn.MaxMmi >= 2)
+                                {
+                                    AddMmiLocationList(stn.MaxMmi, stn.Name, stn.Location);
+                                }
+                            }
+
+                            ShowMmiLocationList();
+                        }
+
+                        if (phaseChanged || m_updateGrid)
                         {
                             m_updateGrid = true;
                             await RequestGridData(eqkId, phase);
                         }
 
-                        if (phase != 2 && m_prevPhase != phase)
+                        if (phase != 2 && phaseChanged)
                         {
                             foreach (var stn in m_stations)
                             {
@@ -277,6 +309,7 @@ namespace PewsClient
                         m_intensityGrid.Clear();
 
                         HideEqkInfo();
+                        HideMmiLocationList();
 
                         if (m_prevPhase > 1)
                         {
@@ -284,6 +317,8 @@ namespace PewsClient
                             {
                                 stn.ResetMaxMmi();
                             }
+
+                            ClearMmiLocationList();
 
                             m_wavEnd.Stop();
                             m_wavEnd.Play();
@@ -522,6 +557,7 @@ namespace PewsClient
                 ShowEqkInfo();
                 ShowEqkMmi();
                 ShowWarningHint();
+                ShowMmiLocationList();
             }
         }
 
@@ -997,6 +1033,74 @@ namespace PewsClient
             HideWarningHint();
         }
 
+        private void ShowMmiLocationList()
+        {
+            boxStationLoc.Visibility = Visibility.Visible;
+        }
+
+        private void HideMmiLocationList()
+        {
+            if (chkPin.IsChecked != true)
+            {
+                boxStationLoc.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateMmiLocationList(int mmi, string stnName, string location)
+        {
+            if (string.IsNullOrEmpty(stnName))
+            {
+                return;
+            }
+
+            if (mmi < 0)
+            {
+                mmi = 0;
+            }
+            else if (mmi >= m_mmiWpfBrushes.Length)
+            {
+                mmi = m_mmiWpfBrushes.Length - 1;
+            }
+
+            foreach (var loc in m_mmiLocations)
+            {
+                if (loc.Name == stnName)
+                {
+                    if (mmi != loc.Mmi)
+                    {
+                        loc.Mmi = mmi;
+                        loc.MmiBrush = (mmi >= 6 ? Brushes.White : Brushes.Black);
+                        loc.MmiBackBrush = m_mmiWpfBrushes[mmi];
+
+                        m_mmiLocationsView.Refresh();
+                    }
+                    return;
+                }
+            }
+
+            AddMmiLocationList(mmi, stnName, location);
+        }
+
+        private void AddMmiLocationList(int mmi, string stnName, string location)
+        {
+            m_mmiLocations.Add(new StationInfoView
+            {
+                Mmi = mmi,
+                MmiBrush = (mmi >= 6 ? Brushes.White : Brushes.Black),
+                MmiBackBrush = m_mmiWpfBrushes[mmi],
+                Name = stnName,
+                Location = location,
+            });
+
+            m_mmiLocationsView.Refresh();
+        }
+
+        private void ClearMmiLocationList()
+        {
+            m_mmiLocations.Clear();
+            m_mmiLocationsView.Refresh();
+        }
+
         //#############################################################################################
 
         private string HandleEqk(int phase, string body, byte[] infoBytes)
@@ -1098,13 +1202,17 @@ namespace PewsClient
                 return;
             }
 
+            ClearMmiLocationList();
             m_stnClusters.Clear();
             m_stations.Clear();
             for (int i = 0; i < stnLat.Count; ++i)
             {
+                var info = m_stationDb.GetStationInfoAround(stnLat[i], stnLon[i]);
+
                 m_stations.Add(new PewsStation
                 {
-                    Location = m_stationDb.GetLocationAround(stnLat[i], stnLon[i]),
+                    Name = info.Name,
+                    Location = info.Location,
                     Latitude = stnLat[i],
                     Longitude = stnLon[i],
                 });
@@ -1172,7 +1280,15 @@ namespace PewsClient
                 var stn = m_stations[i];
                 int mmi = mmiData[i];
 
+                int prevMaxMmi = stn.MaxMmi;
                 stn.UpdateMmi(mmi, phase, MaxMmiLifetime);
+
+                // 지진 상황이고 관측소 최대진도가 바뀌었으며 그것이 2 이상일 때
+                // 해당 지역 계측진도 갱신.
+                if (phase > 1 && prevMaxMmi != stn.MaxMmi && stn.MaxMmi >= 2)
+                {
+                    UpdateMmiLocationList(stn.MaxMmi, stn.Name, stn.Location);
+                }
 
                 if (mmi > maxMmi)
                 {
