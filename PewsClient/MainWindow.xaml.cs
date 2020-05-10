@@ -145,10 +145,12 @@ namespace PewsClient
             m_timerBeep.Start();
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
             m_timer.Stop();
             m_timerBeep.Stop();
+
+            Properties.Settings.Default.Save();
         }
 
         private async void Timer_Tick(object sender, EventArgs e)

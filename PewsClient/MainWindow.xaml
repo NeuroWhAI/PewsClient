@@ -6,7 +6,9 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:PewsClient"
         mc:Ignorable="d"
-        Title="PEWS @ NeuroWhAI" Height="580" Width="480" MinHeight="464" MinWidth="384"
+        Title="PEWS @ NeuroWhAI" MinHeight="464" MinWidth="384"
+        Height="{local:SettingBinding Height}"
+        Width="{local:SettingBinding Width}"
         Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.DataContext>
         <local:MainWindowVM/>
