@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:PewsClient"
         mc:Ignorable="d"
-        Title="PEWS @ NeuroWhAI" Height="580" Width="480" MinHeight="350" MinWidth="250"
+        Title="PEWS @ NeuroWhAI" Height="580" Width="480" MinHeight="464" MinWidth="384"
         Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.DataContext>
         <local:MainWindowVM/>
@@ -70,43 +70,9 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <WrapPanel Orientation="Vertical" HorizontalAlignment="Right">
+                <Grid x:Name="boxStationLoc" Width="120" Height="150" Margin="4"
+                      HorizontalAlignment="Right">
                     <!-- 우상단 -->
-                    <Border x:Name="boxWarningHint" Width="120" Height="34" Margin="4"
-                            BorderThickness="2" BorderBrush="Gray">
-                        <TextBlock x:Name="txtWarningHint" FontSize="20" TextAlignment="Center"
-                                   Foreground="Gray" VerticalAlignment="Center">IDLE</TextBlock>
-                    </Border>
-                </WrapPanel>
-                <WrapPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <!-- 우하단 -->
-                    <StackPanel Width="60" Margin="0,16,2,0" HorizontalAlignment="Right">
-                        <StackPanel.Resources>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontSize" Value="16"></Setter>
-                            </Style>
-                        </StackPanel.Resources>
-                        <StackPanel Orientation="Horizontal" >
-                            <TextBlock Foreground="#FF1000">강:</TextBlock>
-                            <TextBlock x:Name="txtHighStn" Foreground="#FF1000" Margin="4,0">0</TextBlock>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Foreground="Yellow">중:</TextBlock>
-                            <TextBlock x:Name="txtMidStn" Foreground="Yellow" Margin="4,0">00</TextBlock>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Foreground="YellowGreen">약:</TextBlock>
-                            <TextBlock x:Name="txtLowStn" Foreground="YellowGreen" Margin="4,0">000</TextBlock>
-                        </StackPanel>
-                    </StackPanel>
-                    <Image Source="pack://application:,,,/Resources/mmi bar.png"
-                           RenderOptions.BitmapScalingMode="HighQuality"
-                           Stretch="None" HorizontalAlignment="Right"
-                           Margin="0,16,0,0"></Image>
-                </WrapPanel>
-                <Grid x:Name="boxStationLoc" Grid.Row="1" Width="120" Height="150" Margin="0,0,22,8"
-                      HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <!-- 우하단 2 -->
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -143,6 +109,41 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
+                <Image Grid.Row="1" Source="pack://application:,,,/Resources/mmi bar.png"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                       Margin="0"></Image>
+                <WrapPanel Grid.Row="1" Orientation="Horizontal"
+                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                           Margin="0,8,24,0">
+                    <!-- 우하단 -->
+                    <Border x:Name="boxWarningHint" Width="120" Height="34" Margin="10"
+                            BorderThickness="2" BorderBrush="Gray"
+                            HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock x:Name="txtWarningHint" FontSize="20" TextAlignment="Center"
+                                   Foreground="Gray" VerticalAlignment="Center">IDLE</TextBlock>
+                    </Border>
+                    <StackPanel Width="60" Margin="0,8"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="16"></Setter>
+                            </Style>
+                        </StackPanel.Resources>
+                        <StackPanel Orientation="Horizontal" >
+                            <TextBlock Foreground="#FF1000">강:</TextBlock>
+                            <TextBlock x:Name="txtHighStn" Foreground="#FF1000" Margin="4,0">0</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="Yellow">중:</TextBlock>
+                            <TextBlock x:Name="txtMidStn" Foreground="Yellow" Margin="4,0">00</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="YellowGreen">약:</TextBlock>
+                            <TextBlock x:Name="txtLowStn" Foreground="YellowGreen" Margin="4,0">000</TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </WrapPanel>
             </Grid>
             <StackPanel Margin="2">
                 <!-- 좌상단 -->
@@ -162,8 +163,8 @@
             <StackPanel Margin="2" VerticalAlignment="Bottom">
                 <!-- 좌하단 -->
                 <StackPanel Orientation="Horizontal" Height="30">
-                    <TextBlock x:Name="lblLevel" Foreground="White" FontSize="20" VerticalAlignment="Center">Lv</TextBlock>
-                    <TextBlock x:Name="txtLevel" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="4,0">000</TextBlock>
+                    <TextBlock x:Name="lblLevel" Foreground="White" FontSize="24" VerticalAlignment="Center">Lv</TextBlock>
+                    <TextBlock x:Name="txtLevel" Foreground="White" FontSize="24" VerticalAlignment="Center" Margin="4,0">000</TextBlock>
                 </StackPanel>
                 <TextBlock x:Name="txtServerTime" TextWrapping="Wrap" Foreground="White">서버 시간</TextBlock>
             </StackPanel>
