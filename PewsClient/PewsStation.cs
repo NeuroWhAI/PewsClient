@@ -9,6 +9,11 @@ namespace PewsClient
     class PewsStation
     {
         /// <summary>
+        /// 지역
+        /// </summary>
+        public string Location { get; set; } = string.Empty;
+
+        /// <summary>
         /// 경도
         /// </summary>
         public double Longitude { get; set; } = 0;

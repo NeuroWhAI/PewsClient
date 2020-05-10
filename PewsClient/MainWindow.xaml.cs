@@ -93,6 +93,7 @@ namespace PewsClient
         private bool m_stationUpdate = true;
         private List<PewsStation> m_stations = new List<PewsStation>();
         private readonly TimeSpan MaxMmiLifetime = TimeSpan.FromSeconds(60);
+        private StationDatabase m_stationDb = new StationDatabase();
 
         private Gdi.PointF m_epicenter = new Gdi.PointF(-100, -100);
         private float m_waveTick = 0;
@@ -109,6 +110,8 @@ namespace PewsClient
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            m_stationDb.LoadDatabase("res/stations.csv");
+
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
@@ -1101,6 +1104,7 @@ namespace PewsClient
             {
                 m_stations.Add(new PewsStation
                 {
+                    Location = m_stationDb.GetLocationAround(stnLat[i], stnLon[i]),
                     Latitude = stnLat[i],
                     Longitude = stnLon[i],
                 });
