@@ -129,8 +129,8 @@ namespace PewsClient
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
-            //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
+            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            StartSimulation("2019003859", "20190419111643"); // 동해 4.3
 #endif
 
             LoadResources();
@@ -143,6 +143,21 @@ namespace PewsClient
             m_timerBeep.Interval = TimeSpan.FromMilliseconds(2100);
             m_timerBeep.Tick += TimerBeep_Tick;
             m_timerBeep.Start();
+
+            Task.Factory.StartNew(() =>
+            {
+                if (UpdateManager.CheckUpdate())
+                {
+                    var choice = Dispatcher.Invoke(() => MessageBox.Show("업데이트가 있습니다.\n다운로드 페이지를 여시겠습니까?",
+                        "PEWS Client",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question));
+
+                    if (choice == MessageBoxResult.Yes)
+                    {
+                        Process.Start("https://neurowhai.tistory.com/395");
+                    }
+                }
+            });
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)

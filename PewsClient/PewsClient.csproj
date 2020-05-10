@@ -68,6 +68,7 @@
     <Compile Include="SettingBindingExtension.cs" />
     <Compile Include="StationDatabase.cs" />
     <Compile Include="StationInfoView.cs" />
+    <Compile Include="UpdateManager.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
