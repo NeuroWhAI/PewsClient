@@ -56,6 +56,7 @@ namespace PewsClient
             HideEqkMmi();
             HideWarningHint();
             HideMmiLocationList();
+            HideEta();
 
             txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
         }
@@ -98,6 +99,7 @@ namespace PewsClient
         private Stopwatch m_tickStopwatch = new Stopwatch();
         private DispatcherTimer m_timer = new DispatcherTimer();
         private DispatcherTimer m_timerBeep = new DispatcherTimer();
+        private DispatcherTimer m_timerCountdown = new DispatcherTimer();
 
         private string m_prevBinTime = string.Empty;
         private double m_tide = 1000;
@@ -106,6 +108,7 @@ namespace PewsClient
 
         private int m_prevPhase = 1;
         private string m_prevAlarmId = string.Empty;
+        private DateTimeOffset m_currEqkTime = DateTimeOffset.MinValue;
 
         private bool m_stationUpdate = true;
         private List<PewsStation> m_stations = new List<PewsStation>();
@@ -149,6 +152,10 @@ namespace PewsClient
             m_timerBeep.Tick += TimerBeep_Tick;
             m_timerBeep.Start();
 
+            m_timerCountdown.Interval = TimeSpan.FromMilliseconds(100);
+            m_timerCountdown.Tick += TimerCountdown_Tick;
+            m_timerCountdown.Start();
+
             Task.Factory.StartNew(() =>
             {
                 if (UpdateManager.CheckUpdate())
@@ -169,6 +176,7 @@ namespace PewsClient
         {
             m_timer.Stop();
             m_timerBeep.Stop();
+            m_timerCountdown.Stop();
 
             Properties.Settings.Default.Save();
         }
@@ -295,6 +303,11 @@ namespace PewsClient
 
                         ShowEqkInfo();
 
+                        if (m_option.HomeAvailable)
+                        {
+                            ShowEta();
+                        }
+
                         // 속보 전환 시 지역별 계측진도 초기화.
                         if (phase == 2 && phaseChanged)
                         {
@@ -332,6 +345,9 @@ namespace PewsClient
 
                         HideEqkInfo();
                         HideMmiLocationList();
+                        HideEta();
+
+                        m_currEqkTime = DateTimeOffset.MinValue;
 
                         if (m_prevPhase > 1)
                         {
@@ -571,6 +587,23 @@ namespace PewsClient
             }
         }
 
+        private void TimerCountdown_Tick(object sender, EventArgs e)
+        {
+            if (m_currEqkTime != DateTimeOffset.MinValue
+                && m_option.HomeAvailable
+                && m_prevPhase > 1)
+            {
+                double leftTime = Math.Floor(Math.Sqrt(Math.Pow((m_epicenter.Y - m_option.HomeLatitude) * 111, 2) + Math.Pow((m_epicenter.X - m_option.HomeLongitude) * 88, 2)) / 3);
+                leftTime -= Math.Ceiling(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - (m_tide / 1000.0) - m_currEqkTime.ToUnixTimeSeconds());
+
+                UpdateEta(leftTime);
+            }
+            else
+            {
+                lblEta.Text = "도달 시간 표시";
+            }
+        }
+
         private void ImageCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             // 위치 설정 모드가 아니면 무시.
@@ -588,6 +621,11 @@ namespace PewsClient
 
             chkSetLocation.IsChecked = false;
 
+            if (m_prevPhase > 1)
+            {
+                ShowEta();
+            }
+
             SaveSettings();
         }
 
@@ -602,12 +640,15 @@ namespace PewsClient
                 ShowEqkMmi();
                 ShowWarningHint();
                 ShowMmiLocationList();
+                ShowEta();
             }
         }
 
         private void MenuItemRemoveHome_Click(object sender, RoutedEventArgs e)
         {
             m_option.RemoveHome();
+
+            HideEta();
 
             SaveSettings();
         }
@@ -720,6 +761,9 @@ namespace PewsClient
             int height = m_imgMap.Height;
             float fWidth = m_imgMap.Width;
             float fHeight = m_imgMap.Height;
+
+            float eqkX = (float)LonToX(m_epicenter.X) - 4;
+            float eqkY = (float)LatToY(m_epicenter.Y) - 7;
 
             using (var sWavePen = new Gdi.Pen(Gdi.Color.FromArgb(255, 0, 0), 2.0f))
             using (var pWavePen = new Gdi.Pen(Gdi.Color.FromArgb(0, 0, 255), 2.0f))
@@ -892,22 +936,22 @@ namespace PewsClient
                         && m_waveTick > 0.0f && m_waveTick < 2048.0f)
                     {
                         // P
-                        g.DrawEllipse(pWavePen, m_epicenter.X - m_waveTick * 2, m_epicenter.Y - m_waveTick * 2,
+                        g.DrawEllipse(pWavePen, eqkX - m_waveTick * 2, eqkY - m_waveTick * 2,
                             m_waveTick * 4, m_waveTick * 4);
 
                         // S
-                        g.DrawEllipse(sWavePen, m_epicenter.X - m_waveTick, m_epicenter.Y - m_waveTick,
+                        g.DrawEllipse(sWavePen, eqkX - m_waveTick, eqkY - m_waveTick,
                             m_waveTick * 2, m_waveTick * 2);
                     }
 
                     // Epicenter
                     if (m_prevPhase > 1
-                        && m_epicenter.X > -32 && m_epicenter.X < fWidth + 32
-                        && m_epicenter.Y > -32 && m_epicenter.Y < fHeight + 32)
+                        && eqkX > -32 && eqkX < fWidth + 32
+                        && eqkY > -32 && eqkY < fHeight + 32)
                     {
-                        g.FillEllipse(Gdi.Brushes.Blue, m_epicenter.X - 4, m_epicenter.Y - 4, 8, 8);
-                        g.DrawEllipse(Gdi.Pens.Blue, m_epicenter.X - 8, m_epicenter.Y - 8, 16, 16);
-                        g.DrawEllipse(Gdi.Pens.Blue, m_epicenter.X - 12, m_epicenter.Y - 12, 24, 24);
+                        g.FillEllipse(Gdi.Brushes.Blue, eqkX - 4, eqkY - 4, 8, 8);
+                        g.DrawEllipse(Gdi.Pens.Blue, eqkX - 8, eqkY - 8, 16, 16);
+                        g.DrawEllipse(Gdi.Pens.Blue, eqkX - 12, eqkY - 12, 24, 24);
                     }
                 }
 
@@ -1186,6 +1230,40 @@ namespace PewsClient
             m_mmiLocationsView.Refresh();
         }
 
+        private void ShowEta()
+        {
+            lblEta.Visibility = Visibility.Visible;
+        }
+
+        private void HideEta()
+        {
+            if (chkPin.IsChecked != true)
+            {
+                lblEta.Visibility = Visibility.Collapsed;
+            }
+
+            lblEta.Text = "도달 시간 표시";
+        }
+
+        private void UpdateEta(double eta)
+        {
+            if (Math.Ceiling(eta) > 0)
+            {
+                if (eta >= 60)
+                {
+                    lblEta.Text = $"도달 {eta / 60:F0}분 전";
+                }
+                else
+                {
+                    lblEta.Text = $"도달 {eta:F0}초 전";
+                }
+            }
+            else
+            {
+                lblEta.Text = "도달";
+            }
+        }
+
         //#############################################################################################
 
         private string HandleEqk(int phase, string body, byte[] infoBytes)
@@ -1197,7 +1275,7 @@ namespace PewsClient
             double origLon = 124 + (double)Convert.ToInt32(data.Substring(10, 10), 2) / 100;
             double eqkMag = (double)Convert.ToInt32(data.Substring(20, 7), 2) / 10;
             double eqkDep = (double)Convert.ToInt32(data.Substring(27, 10), 2) / 10;
-            long eqkUnixTime = Convert.ToInt64(data.Substring(37, 32), 2) + 9 * 3600; // NOTE: UTC어야할텐데 9시간 더해줘야 UTC 시간이 됨.
+            long eqkUnixTime = Convert.ToInt64(data.Substring(37, 32), 2) + 9 * 3600; // 초 // NOTE: UTC어야할텐데 9시간 더해줘야 UTC 시간이 됨.
             var eqkTime = DateTimeOffset.FromUnixTimeSeconds(eqkUnixTime); // UTC
             string eqkId = "20" + Convert.ToInt32(data.Substring(69, 26), 2); // TODO: 22세기가 되면 "20"이 아니게 되는건가?
             int eqkIntens = Convert.ToInt32(data.Substring(95, 4), 2);
@@ -1214,8 +1292,9 @@ namespace PewsClient
                 }
             }
 
-            m_epicenter = new Gdi.PointF((float)LonToX(origLon) - 4, (float)LatToY(origLat) - 7);
+            m_epicenter = new Gdi.PointF((float)origLon, (float)origLat);
             m_waveTick = (float)(((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - m_tide) / 1000.0 - eqkUnixTime) * 3000.0 / 772.5);
+            m_currEqkTime = eqkTime;
 
             if (phase < 3)
             {

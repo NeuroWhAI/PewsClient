@@ -176,6 +176,7 @@
             </StackPanel>
             <StackPanel Margin="2" VerticalAlignment="Bottom">
                 <!-- 좌하단 -->
+                <TextBlock x:Name="lblEta" Foreground="White" FontSize="16" VerticalAlignment="Center">도달 시간 표시</TextBlock>
                 <StackPanel Orientation="Horizontal" Height="30">
                     <TextBlock x:Name="lblLevel" Foreground="White" FontSize="24" VerticalAlignment="Center">Lv</TextBlock>
                     <TextBlock x:Name="txtLevel" Foreground="White" FontSize="24" VerticalAlignment="Center" Margin="4,0">000</TextBlock>
