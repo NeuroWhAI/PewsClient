@@ -14,22 +14,30 @@
         <local:MainWindowVM/>
     </Window.DataContext>
     <DockPanel x:Name="dock">
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock x:Name="txtStatus">Loading</TextBlock>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock x:Name="txtTickDelay">Lag</TextBlock>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <CheckBox x:Name="chkPin" Checked="CheckBoxPin_Changed" Unchecked="CheckBoxPin_Changed">UI 고정</CheckBox>
-            </StatusBarItem>
-        </StatusBar>
+        <Grid DockPanel.Dock="Bottom" Background="LightGray">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StatusBar DockPanel.Dock="Bottom">
+                <StatusBarItem>
+                    <TextBlock x:Name="txtStatus">Loading</TextBlock>
+                </StatusBarItem>
+                <Separator/>
+                <StatusBarItem>
+                    <TextBlock x:Name="txtTimeSync">Sync</TextBlock>
+                </StatusBarItem>
+                <Separator/>
+                <StatusBarItem>
+                    <TextBlock x:Name="txtTickDelay">Lag</TextBlock>
+                </StatusBarItem>
+            </StatusBar>
+            <Menu Grid.Column="1" VerticalAlignment="Center" Margin="2,0">
+                <MenuItem Header="메뉴" Padding="8,1">
+                    <MenuItem x:Name="chkPin" Header="UI 고정" IsCheckable="True" Checked="CheckBoxPin_Changed" Unchecked="CheckBoxPin_Changed"></MenuItem>
+                </MenuItem>
+            </Menu>
+        </Grid>
         <Grid x:Name="boxEqkInfo" DockPanel.Dock="Top" Background="#B3E5FC">
             <!-- 상단 -->
             <Grid.RowDefinitions>

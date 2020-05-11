@@ -568,7 +568,7 @@ namespace PewsClient
 
         private void CheckBoxPin_Changed(object sender, RoutedEventArgs e)
         {
-            var box = sender as CheckBox;
+            var box = sender as MenuItem;
             if (box.IsChecked == true)
             {
                 ShowEqkInfo();
