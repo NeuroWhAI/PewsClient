@@ -69,6 +69,8 @@
     <Compile Include="StationDatabase.cs" />
     <Compile Include="StationInfoView.cs" />
     <Compile Include="UpdateManager.cs" />
+    <Compile Include="OptionBase.cs" />
+    <Compile Include="UserOption.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
