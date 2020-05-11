@@ -63,6 +63,9 @@ namespace PewsClient
         private ObservableCollection<StationInfoView> m_mmiLocations = null;
         private ICollectionView m_mmiLocationsView = null;
 
+        private readonly string SettingFileName = "settings.txt";
+        private UserOption m_option = new UserOption();
+
         private bool m_simMode = false;
         private DateTime m_simEndTime = DateTime.MinValue;
 
@@ -124,6 +127,8 @@ namespace PewsClient
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            LoadSettings();
+
             m_stationDb.LoadDatabase("res/stations.csv");
 
 #if DEBUG
@@ -566,6 +571,28 @@ namespace PewsClient
             }
         }
 
+        private void ImageCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 위치 설정 모드가 아니면 무시.
+            if (chkSetLocation.IsChecked != true)
+            {
+                return;
+            }
+
+            var cursor = e.GetPosition(canvas);
+            double x = cursor.X / canvas.RenderSize.Width * m_imgMap.Width;
+            double y = cursor.Y / canvas.RenderSize.Height * m_imgMap.Height;
+
+            m_option.HomeLongitude = XToLon(x);
+            m_option.HomeLatitude = YToLat(y);
+
+            chkSetLocation.IsChecked = false;
+
+            SaveSettings();
+        }
+
+        //#############################################################################################
+
         private void CheckBoxPin_Changed(object sender, RoutedEventArgs e)
         {
             var box = sender as MenuItem;
@@ -576,6 +603,13 @@ namespace PewsClient
                 ShowWarningHint();
                 ShowMmiLocationList();
             }
+        }
+
+        private void MenuItemRemoveHome_Click(object sender, RoutedEventArgs e)
+        {
+            m_option.RemoveHome();
+
+            SaveSettings();
         }
 
         //#############################################################################################
@@ -645,6 +679,32 @@ namespace PewsClient
             m_wavBeep1.Volume = 0.25;
             m_wavBeep2.Volume = 0.25;
             m_wavBeep3.Volume = 0.25;
+        }
+
+        private void LoadSettings()
+        {
+            try
+            {
+                m_option.Load(SettingFileName);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("설정을 완전하게 불러올 수 없습니다.\nError: " + e.Message,
+                    "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                m_option.Save(SettingFileName);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("설정을 저장할 수 없습니다.\nError: " + e.Message,
+                    "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void DrawCanvas()
@@ -740,6 +800,14 @@ namespace PewsClient
                             }
                             g.DrawRectangle(Gdi.Pens.Black, x, y, 10, 10);
                         }
+                    }
+
+                    // Home
+                    if (m_option.HomeAvailable)
+                    {
+                        float x = (float)(LonToX(m_option.HomeLongitude));
+                        float y = (float)(LatToY(m_option.HomeLatitude));
+                        g.FillPie(Gdi.Brushes.DeepPink, x - 14, y - 26, 28, 52, -90f - 20f, 40f);
                     }
 
                     // Cluster
@@ -1440,6 +1508,16 @@ namespace PewsClient
         private double LatToY(double latitude)
         {
             return (38.9 - latitude) * 138.4;
+        }
+
+        private double XToLon(double x)
+        {
+            return x / 113 + 124.5;
+        }
+
+        private double YToLat(double y)
+        {
+            return -y / 138.4 + 38.9;
         }
 
         private Gdi.Color HexCodeToColor(string code)
