@@ -600,6 +600,7 @@ namespace PewsClient
             }
             else
             {
+                lblHomeMmi.Text = "예상 진도";
                 lblEta.Text = "도달 시간 표시";
             }
         }
@@ -624,6 +625,7 @@ namespace PewsClient
             if (m_prevPhase > 1)
             {
                 ShowEta();
+                UpdateHomeMmi(m_intensityGrid);
             }
 
             SaveSettings();
@@ -1232,6 +1234,7 @@ namespace PewsClient
 
         private void ShowEta()
         {
+            lblHomeMmi.Visibility = Visibility.Visible;
             lblEta.Visibility = Visibility.Visible;
         }
 
@@ -1239,9 +1242,11 @@ namespace PewsClient
         {
             if (chkPin.IsChecked != true)
             {
+                lblHomeMmi.Visibility = Visibility.Collapsed;
                 lblEta.Visibility = Visibility.Collapsed;
             }
 
+            lblHomeMmi.Text = "예상 진도";
             lblEta.Text = "도달 시간 표시";
         }
 
@@ -1261,6 +1266,41 @@ namespace PewsClient
             else
             {
                 lblEta.Text = "도달";
+            }
+        }
+
+        private void UpdateHomeMmi(List<int> intensityList)
+        {
+            if (intensityList.Count <= 0)
+            {
+                return;
+            }
+
+            const int X_SIZE = (int)((132.05 - 124.5) / 0.05);
+
+            if (m_option.HomeAvailable)
+            {
+                int mmi = -1;
+
+                // 내 위치로 인덱스 계산.
+                int yIdx = (int)Math.Round((38.85 - m_option.HomeLatitude) / 0.05);
+                int xIdx = (int)Math.Round((m_option.HomeLongitude - 124.5) / 0.05);
+                int index = yIdx * X_SIZE + xIdx;
+
+                if (yIdx >= 0 && xIdx >= 0 && xIdx < X_SIZE
+                    && index >= 0 && index < intensityList.Count)
+                {
+                    mmi = intensityList[index];
+                }
+
+                if (mmi < 0)
+                {
+                    lblHomeMmi.Text = "진도 불명";
+                }
+                else
+                {
+                    lblHomeMmi.Text = $"진도 {Earthquake.MMIToString(mmi)}";
+                }
             }
         }
 
@@ -1573,6 +1613,9 @@ namespace PewsClient
                 m_intensityGrid.Add(Convert.ToInt32(bStr.Substring(0, 4), 2));
                 m_intensityGrid.Add(Convert.ToInt32(bStr.Substring(4, 4), 2));
             }
+
+            // 예상 도달 진도 계산.
+            UpdateHomeMmi(m_intensityGrid);
 
             m_updateGrid = false;
         }
