@@ -622,9 +622,13 @@ namespace PewsClient
 
             chkSetLocation.IsChecked = false;
 
-            if (m_prevPhase > 1)
+            if (chkPin.IsChecked)
             {
                 ShowEta();
+            }
+
+            if (m_prevPhase > 1)
+            {
                 UpdateHomeMmi(m_intensityGrid);
             }
 
@@ -642,7 +646,11 @@ namespace PewsClient
                 ShowEqkMmi();
                 ShowWarningHint();
                 ShowMmiLocationList();
-                ShowEta();
+
+                if (m_option.HomeAvailable)
+                {
+                    ShowEta();
+                }
             }
         }
 
@@ -650,7 +658,7 @@ namespace PewsClient
         {
             m_option.RemoveHome();
 
-            HideEta();
+            HideEta(ignorePin: true);
 
             SaveSettings();
         }
@@ -1238,9 +1246,9 @@ namespace PewsClient
             lblEta.Visibility = Visibility.Visible;
         }
 
-        private void HideEta()
+        private void HideEta(bool ignorePin = false)
         {
-            if (chkPin.IsChecked != true)
+            if (ignorePin || chkPin.IsChecked != true)
             {
                 lblHomeMmi.Visibility = Visibility.Collapsed;
                 lblEta.Visibility = Visibility.Collapsed;
