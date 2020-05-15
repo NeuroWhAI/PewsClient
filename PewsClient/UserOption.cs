@@ -8,8 +8,8 @@ namespace PewsClient
 {
     class UserOption : OptionBase
     {
-        public double HomeLatitude { get; set; }
-        public double HomeLongitude { get; set; }
+        public double HomeLatitude { get; set; } = -1;
+        public double HomeLongitude { get; set; } = -1;
         public bool HomeAvailable => !(HomeLatitude < 0 || HomeLongitude < 0);
 
         protected override void AfterLoad()
