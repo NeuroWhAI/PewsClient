@@ -170,7 +170,7 @@
                     </Grid.RowDefinitions>
                     <TextBlock VerticalAlignment="Center" Padding="4,2" Background="DimGray" Foreground="White">계측진도</TextBlock>
                     <TextBlock x:Name="txtEqkMmi" Grid.Row="1" VerticalAlignment="Center" TextAlignment="Center" Padding="2"
-                                FontSize="28" FontWeight="Bold" Foreground="Black">Ⅵ</TextBlock>
+                               FontSize="28" FontWeight="Bold" Foreground="Black">Ⅵ</TextBlock>
                     <Border Grid.RowSpan="2" BorderThickness="1" BorderBrush="SlateGray"></Border>
                 </Grid>
             </StackPanel>

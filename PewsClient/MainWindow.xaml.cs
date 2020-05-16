@@ -313,13 +313,19 @@ namespace PewsClient
                             ShowEta();
                         }
 
-                        // 속보 전환 시 지역별 계측진도 초기화.
                         if (phase == 2 && phaseChanged)
                         {
+                            // 속보 전환 시 지역별 계측진도 목록 초기화.
                             ClearMmiLocationList();
 
+                            int maxMaxMmi = 0;
                             foreach (var stn in m_stations)
                             {
+                                if (stn.MaxMmi > maxMaxMmi)
+                                {
+                                    maxMaxMmi = stn.MaxMmi;
+                                }
+
                                 if (stn.MaxMmi >= 2)
                                 {
                                     AddMmiLocationList(stn.MaxMmi, stn.Name, stn.Location);
@@ -327,6 +333,13 @@ namespace PewsClient
                             }
 
                             ShowMmiLocationList();
+
+                            // 계측진도 이전 기록에서 찾아 표시.
+                            if (maxMaxMmi >= m_maxMmi)
+                            {
+                                m_maxMmi = maxMaxMmi;
+                                UpdateEqkMmiPanel(maxMaxMmi);
+                            }
                         }
 
                         if (phaseChanged || m_updateGrid)
