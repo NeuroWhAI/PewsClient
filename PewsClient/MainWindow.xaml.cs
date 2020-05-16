@@ -223,30 +223,34 @@ namespace PewsClient
                     {
                         txtStatus.Text = "Loading";
 
-                        if (!SyncTime())
+                        if (!m_simMode)
                         {
-                            if (m_tide < 1000)
+                            if (!SyncTime())
                             {
-                                m_tide += 200;
+                                // 서버 시간과 동기화 실패 시 적절히 오프셋 조정.
+                                if (m_tide < 1000)
+                                {
+                                    m_tide += 200;
+                                }
+                                else
+                                {
+                                    m_tide -= 200;
+                                }
+                                txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                             }
-                            else
-                            {
-                                m_tide -= 200;
-                            }
-                            txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                         }
 
                         return;
                     }
 
 
-                    // 시간 동기화.
                     if (m_simMode)
                     {
                         txtTimeSync.Text = $"Sync: Paused";
                     }
                     else if (DateTime.UtcNow >= m_nextSyncTime)
                     {
+                        // 시간 동기화.
                         m_nextSyncTime = DateTime.UtcNow + TimeSpan.FromSeconds(10.0);
 
                         string stStr = client.ResponseHeaders.Get("ST");
