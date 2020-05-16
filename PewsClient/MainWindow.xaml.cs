@@ -134,11 +134,13 @@ namespace PewsClient
 
             m_stationDb.LoadDatabase("res/stations.csv");
 
+            SyncTime();
+
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
-            StartSimulation("2019003859", "20190419111643"); // 동해 4.3
+            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
 #endif
 
             LoadResources();
@@ -221,15 +223,18 @@ namespace PewsClient
                     {
                         txtStatus.Text = "Loading";
 
-                        if (m_tide < 1000)
+                        if (!SyncTime())
                         {
-                            m_tide += 200;
+                            if (m_tide < 1000)
+                            {
+                                m_tide += 200;
+                            }
+                            else
+                            {
+                                m_tide -= 200;
+                            }
+                            txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                         }
-                        else
-                        {
-                            m_tide -= 200;
-                        }
-                        txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
 
                         return;
                     }
@@ -664,6 +669,22 @@ namespace PewsClient
         }
 
         //#############################################################################################
+
+        private bool SyncTime()
+        {
+            try
+            {
+                var serverTime = TimeManager.GetNetworkTime("time.windows.com", 3000);
+                m_tide = (DateTime.UtcNow - serverTime).TotalMilliseconds + 1000;
+                txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
 
         private void LoadResources()
         {
