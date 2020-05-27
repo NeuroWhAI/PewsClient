@@ -107,6 +107,8 @@ namespace PewsClient
         private DateTime m_serverTime = DateTime.MinValue;
 
         private int m_prevPhase = 1;
+        private int m_phaseDownLeftTick = 0;
+        private readonly int PhaseDownDelay = 4;
         private string m_prevAlarmId = string.Empty;
         private DateTimeOffset m_currEqkTime = DateTimeOffset.MinValue;
 
@@ -302,13 +304,51 @@ namespace PewsClient
                         phase = 3;
                     }
 
+                    int serverPhase = phase;
+                    bool phaseRestored = false;
+
+                    // phase가 일시적으로 1로 내려가는 현상이 있어서 껍데기 값 사용.
+                    if (phase < m_prevPhase)
+                    {
+                        if (m_phaseDownLeftTick > 0)
+                        {
+                            m_phaseDownLeftTick -= 1;
+                            if (m_phaseDownLeftTick <= 0)
+                            {
+                                // phase가 실질적으로 내려갔다고 봄.
+                                m_phaseDownLeftTick = 0;
+                            }
+                            else
+                            {
+                                // 기존 phase 유지.
+                                phase = m_prevPhase;
+                            }
+                        }
+                        else
+                        {
+                            // 기존 phase 유지 시작.
+                            m_phaseDownLeftTick = PhaseDownDelay;
+                            phase = m_prevPhase;
+                        }
+                    }
+                    else
+                    {
+                        // phase가 원복되었음을 확인.
+                        if (m_phaseDownLeftTick > 0 && phase > 1 && phase == m_prevPhase)
+                        {
+                            phaseRestored = true;
+                        }
+
+                        m_phaseDownLeftTick = 0;
+                    }
+
                     bool phaseChanged = (phase != m_prevPhase);
 
 
                     if (phase > 1)
                     {
                         var infoBytes = bytes.Skip(bytes.Length - MaxEqkStrLen).ToArray();
-                        string eqkId = HandleEqk(phase, body, infoBytes);
+                        string eqkId = HandleEqk(serverPhase, body, infoBytes);
 
                         ShowEqkInfo();
 
@@ -346,7 +386,7 @@ namespace PewsClient
                             }
                         }
 
-                        if (phaseChanged || m_updateGrid)
+                        if ((phaseChanged || phaseRestored || m_updateGrid) && !string.IsNullOrWhiteSpace(eqkId))
                         {
                             m_updateGrid = true;
                             await RequestGridData(eqkId, phase);
@@ -1056,6 +1096,11 @@ namespace PewsClient
 
         private void UpdateEqkInfo(int phase, DateTimeOffset time, string location, int mmi, double magnitude, double depth = double.NaN)
         {
+            if (phase <= 1)
+            {
+                return;
+            }
+
             Style style;
 
             if (phase < 3)
@@ -1354,6 +1399,11 @@ namespace PewsClient
 
         private string HandleEqk(int phase, string body, byte[] infoBytes)
         {
+            if (phase <= 1)
+            {
+                return m_prevAlarmId.Split('|').First();
+            }
+
             string data = body.Substring(body.Length - (MaxEqkStrLen * 8 + MaxEqkInfoLen));
             string eqkStr = WebUtility.UrlDecode(Encoding.UTF8.GetString(infoBytes));
 
@@ -1382,16 +1432,16 @@ namespace PewsClient
             m_waveTick = (float)(((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - m_tide) / 1000.0 - eqkUnixTime) * 3000.0 / 772.5);
             m_currEqkTime = eqkTime;
 
-            if (phase < 3)
+            if (phase == 2)
             {
                 UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag);
             }
-            else
+            else if (phase == 3)
             {
                 UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag, (eqkDep == 0) ? double.NaN : eqkDep);
             }
 
-            string alarmId = eqkId + phase;
+            string alarmId = $"{eqkId}|{phase}";
 
             // 페이즈가 넘어갔으며 이전에 전송한 것과 동일한 알람이 아니라면.
             if (phase != m_prevPhase && alarmId != m_prevAlarmId)
