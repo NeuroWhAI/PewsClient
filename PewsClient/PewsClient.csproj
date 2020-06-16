@@ -69,6 +69,9 @@
     <Compile Include="StationDatabase.cs" />
     <Compile Include="StationInfoView.cs" />
     <Compile Include="TimeManager.cs" />
+    <Compile Include="TimeoutWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UpdateManager.cs" />
     <Compile Include="OptionBase.cs" />
     <Compile Include="UserOption.cs" />

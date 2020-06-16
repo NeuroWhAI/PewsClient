@@ -67,6 +67,10 @@ namespace PewsClient
         private readonly string SettingFileName = "settings.txt";
         private UserOption m_option = new UserOption();
 
+        private readonly TimeSpan TimeoutBin = TimeSpan.FromMilliseconds(3000);
+        private readonly TimeSpan TimeoutStation = TimeSpan.FromMilliseconds(6000);
+        private readonly TimeSpan TimeoutGrid = TimeSpan.FromMilliseconds(6000);
+
         private bool m_simMode = false;
         private DateTime m_simEndTime = DateTime.MinValue;
 
@@ -217,33 +221,38 @@ namespace PewsClient
 
                 byte[] bytes = null;
 
-                using (var client = new WebClient())
+                using (var client = new TimeoutWebClient(TimeoutBin))
                 {
-                    client.Headers.Add("User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
                     try
                     {
                         bytes = await client.DownloadDataTaskAsync(url + ".b");
                     }
-                    catch (WebException)
+                    catch (Exception err)
                     {
-                        txtStatus.Text = "Loading";
-
-                        if (!m_simMode)
+                        if (err is WebException || err is TimeoutException)
                         {
-                            if (!SyncTime())
+                            txtStatus.Text = "Loading";
+
+                            if (!m_simMode)
                             {
-                                // 서버 시간과 동기화 실패 시 적절히 오프셋 조정.
-                                if (m_tide < 1000)
+                                if (!SyncTime())
                                 {
-                                    m_tide += 200;
+                                    // 서버 시간과 동기화 실패 시 적절히 오프셋 조정.
+                                    if (m_tide < 1000)
+                                    {
+                                        m_tide += 200;
+                                    }
+                                    else
+                                    {
+                                        m_tide -= 200;
+                                    }
+                                    txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                                 }
-                                else
-                                {
-                                    m_tide -= 200;
-                                }
-                                txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                             }
+                        }
+                        else
+                        {
+                            txtStatus.Text = "Error";
                         }
 
                         return;
@@ -437,10 +446,8 @@ namespace PewsClient
                     {
                         byte[] stnBytes = null;
 
-                        using (var client = new WebClient())
+                        using (var client = new TimeoutWebClient(TimeoutStation))
                         {
-                            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
                             for (int retry = 0; retry <= 2; ++retry)
                             {
                                 try
@@ -448,7 +455,7 @@ namespace PewsClient
                                     stnBytes = await client.DownloadDataTaskAsync(url + ".s");
                                     break;
                                 }
-                                catch (WebException)
+                                catch
                                 {
                                     stnBytes = null;
                                     await Task.Delay(300);
@@ -1687,14 +1694,12 @@ namespace PewsClient
 
             try
             {
-                using (var client = new WebClient())
+                using (var client = new TimeoutWebClient(TimeoutGrid))
                 {
-                    client.Headers.Add("User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
                     bytes = await client.DownloadDataTaskAsync(url);
                 }
             }
-            catch (Exception)
+            catch
             {
                 bytes = null;
             }
