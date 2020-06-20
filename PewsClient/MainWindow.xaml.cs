@@ -151,6 +151,7 @@ namespace PewsClient
             //StartSimulation("2019016848", "20191230003208"); // 밀양 3.5
             //StartSimulation("2019001035", "20190210125338"); // 포항 4.1
             //StartSimulation("2018000050", "20180211050303"); // 포항 4.6
+            //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
 #endif
 
             LoadResources();
