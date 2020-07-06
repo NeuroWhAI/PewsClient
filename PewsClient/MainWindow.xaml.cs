@@ -1,4 +1,5 @@
 ﻿using Gdi = System.Drawing;
+using Gdi2D = System.Drawing.Drawing2D;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -865,206 +866,220 @@ namespace PewsClient
             float eqkX = (float)LonToX(m_epicenter.X) - 4;
             float eqkY = (float)LatToY(m_epicenter.Y) - 7;
 
-            using (var sWavePen = new Gdi.Pen(Gdi.Color.FromArgb(255, 0, 0), 2.0f))
-            using (var pWavePen = new Gdi.Pen(Gdi.Color.FromArgb(0, 0, 255), 2.0f))
+            using (var g = Gdi.Graphics.FromImage(m_canvasBitmap))
             {
-                using (var g = Gdi.Graphics.FromImage(m_canvasBitmap))
+                // Background
+                g.Clear(Gdi.Color.FromArgb(211, 211, 211));
+
+                // Intensity
+                var mmiIterator = m_intensityGrid.GetEnumerator();
+                bool isEnd = false;
+                for (double i = 38.85; i > 33; i -= 0.05)
                 {
-                    // Background
-                    g.Clear(Gdi.Color.FromArgb(211, 211, 211));
-
-                    // Intensity
-                    var mmiIterator = m_intensityGrid.GetEnumerator();
-                    bool isEnd = false;
-                    for (double i = 38.85; i > 33; i -= 0.05)
+                    for (double j = 124.5; j < 132.05; j += 0.05)
                     {
-                        for (double j = 124.5; j < 132.05; j += 0.05)
+                        if (!mmiIterator.MoveNext())
                         {
-                            if (!mmiIterator.MoveNext())
-                            {
-                                isEnd = true;
-                                break;
-                            }
-
-                            int mmi = mmiIterator.Current;
-
-                            if (mmi >= 0 && mmi < m_mmiBrushes.Length)
-                            {
-                                var brush = m_mmiBrushes[mmi];
-                                float x = (float)(LonToX(j) - 4);
-                                float y = (float)(LatToY(i) - 7);
-
-                                g.FillRectangle(brush, x, y, 8, 8);
-                            }
+                            isEnd = true;
+                            break;
                         }
 
-                        if (isEnd)
+                        int mmi = mmiIterator.Current;
+
+                        if (mmi >= 0 && mmi < m_mmiBrushes.Length)
                         {
-                            break;
+                            var brush = m_mmiBrushes[mmi];
+                            float x = (float)(LonToX(j) - 4);
+                            float y = (float)(LatToY(i) - 7);
+
+                            g.FillRectangle(brush, x, y, 8, 8);
                         }
                     }
 
-                    // Map
-                    g.DrawImage(m_imgMap, new Gdi.RectangleF(0, 0, m_imgMap.Width, m_imgMap.Height));
-
-                    // Station
-                    var stations = (m_prevPhase == 2 ? m_stations.OrderBy((s) => s.MaxMmi).AsEnumerable() : m_stations);
-                    foreach (var stn in stations)
+                    if (isEnd)
                     {
-                        float x = (float)(LonToX(stn.Longitude) - 4);
-                        float y = (float)(LatToY(stn.Latitude) - 4);
+                        break;
+                    }
+                }
 
-                        if (m_prevPhase == 2 && stn.MaxMmi >= 2)
+                // Map
+                g.DrawImage(m_imgMap, new Gdi.RectangleF(0, 0, m_imgMap.Width, m_imgMap.Height));
+
+                // Station
+                var stations = (m_prevPhase == 2 ? m_stations.OrderBy((s) => s.MaxMmi).AsEnumerable() : m_stations);
+                foreach (var stn in stations)
+                {
+                    float x = (float)(LonToX(stn.Longitude) - 4);
+                    float y = (float)(LatToY(stn.Latitude) - 4);
+
+                    if (m_prevPhase == 2 && stn.MaxMmi >= 2)
+                    {
+                        // 지진 속보 시.
+                        int maxMmi = stn.MaxMmi;
+                        if (maxMmi >= 0 && maxMmi < m_mmiBrushes.Length)
                         {
-                            // 지진 속보 시.
-                            int maxMmi = stn.MaxMmi;
-                            if (maxMmi >= 0 && maxMmi < m_mmiBrushes.Length)
+                            var brush = m_mmiBrushes[maxMmi];
+                            var backBrush = (stn.MaxMmi >= 6 ? Gdi.Brushes.White : Gdi.Brushes.Black);
+                            var stringFormat = new Gdi.StringFormat
                             {
-                                var brush = m_mmiBrushes[maxMmi];
-                                var backBrush = (stn.MaxMmi >= 6 ? Gdi.Brushes.White : Gdi.Brushes.Black);
-                                var stringFormat = new Gdi.StringFormat
-                                {
-                                    Alignment = Gdi.StringAlignment.Center,
-                                    LineAlignment = Gdi.StringAlignment.Center,
-                                };
+                                Alignment = Gdi.StringAlignment.Center,
+                                LineAlignment = Gdi.StringAlignment.Center,
+                            };
 
-                                g.FillEllipse(brush, x - 11, y - 11, 22, 22);
-                                g.DrawString(Earthquake.MMIToString(stn.MaxMmi), m_mmiFont,
-                                    backBrush, x + 0.5f, y + 0.5f, stringFormat);
-                            }
+                            g.FillEllipse(brush, x - 11, y - 11, 22, 22);
+                            g.DrawString(Earthquake.MMIToString(stn.MaxMmi), m_mmiFont,
+                                backBrush, x + 0.5f, y + 0.5f, stringFormat);
+                        }
+                    }
+                    else
+                    {
+                        // 평시.
+                        int mmi = stn.Mmi;
+                        if (mmi >= 0 && mmi < m_mmiBrushes.Length)
+                        {
+                            var brush = m_mmiBrushes[mmi];
+                            g.FillRectangle(brush, x, y, 10, 10);
+                        }
+                        g.DrawRectangle(Gdi.Pens.Black, x, y, 10, 10);
+                    }
+                }
+
+                // Home
+                if (m_option.HomeAvailable)
+                {
+                    float x = (float)(LonToX(m_option.HomeLongitude));
+                    float y = (float)(LatToY(m_option.HomeLatitude));
+                    g.FillPie(Gdi.Brushes.DeepPink, x - 14, y - 26, 28, 52, -90f - 20f, 40f);
+                }
+
+                // Cluster
+                foreach (var cluster in m_stnClusters)
+                {
+                    if (cluster.Count < MinClusterSize)
+                    {
+                        continue;
+                    }
+
+                    bool bInit = true;
+                    float left = 0, right = 0, top = 0, bottom = 0;
+                    int maxMmi = -1;
+
+                    foreach (int stnIdx in cluster)
+                    {
+                        if (stnIdx < 0 || stnIdx >= m_stations.Count)
+                        {
+                            // 관측소 번호에 오류가 있으므로 클러스터 무시.
+                            break;
+                        }
+
+                        var stn = m_stations[stnIdx];
+                        float x = (float)LonToX(stn.Longitude);
+                        float y = (float)LatToY(stn.Latitude);
+
+                        if (stn.Mmi > maxMmi)
+                        {
+                            maxMmi = stn.Mmi;
+                        }
+
+                        if (bInit)
+                        {
+                            bInit = false;
+                            left = x;
+                            right = x;
+                            top = y;
+                            bottom = y;
                         }
                         else
                         {
-                            // 평시.
-                            int mmi = stn.Mmi;
-                            if (mmi >= 0 && mmi < m_mmiBrushes.Length)
+                            if (x < left)
                             {
-                                var brush = m_mmiBrushes[mmi];
-                                g.FillRectangle(brush, x, y, 10, 10);
-                            }
-                            g.DrawRectangle(Gdi.Pens.Black, x, y, 10, 10);
-                        }
-                    }
-
-                    // Home
-                    if (m_option.HomeAvailable)
-                    {
-                        float x = (float)(LonToX(m_option.HomeLongitude));
-                        float y = (float)(LatToY(m_option.HomeLatitude));
-                        g.FillPie(Gdi.Brushes.DeepPink, x - 14, y - 26, 28, 52, -90f - 20f, 40f);
-                    }
-
-                    // Cluster
-                    foreach (var cluster in m_stnClusters)
-                    {
-                        if (cluster.Count < MinClusterSize)
-                        {
-                            continue;
-                        }
-
-                        bool bInit = true;
-                        float left = 0, right = 0, top = 0, bottom = 0;
-                        int maxMmi = -1;
-
-                        foreach (int stnIdx in cluster)
-                        {
-                            if (stnIdx < 0 || stnIdx >= m_stations.Count)
-                            {
-                                // 관측소 번호에 오류가 있으므로 클러스터 무시.
-                                break;
-                            }
-
-                            var stn = m_stations[stnIdx];
-                            float x = (float)LonToX(stn.Longitude);
-                            float y = (float)LatToY(stn.Latitude);
-
-                            if (stn.Mmi > maxMmi)
-                            {
-                                maxMmi = stn.Mmi;
-                            }
-
-                            if (bInit)
-                            {
-                                bInit = false;
                                 left = x;
+                            }
+                            else if (x > right)
+                            {
                                 right = x;
+                            }
+
+                            if (y < top)
+                            {
                                 top = y;
+                            }
+                            else if (y > bottom)
+                            {
                                 bottom = y;
                             }
-                            else
-                            {
-                                if (x < left)
-                                {
-                                    left = x;
-                                }
-                                else if (x > right)
-                                {
-                                    right = x;
-                                }
-
-                                if (y < top)
-                                {
-                                    top = y;
-                                }
-                                else if (y > bottom)
-                                {
-                                    bottom = y;
-                                }
-                            }
-                        }
-
-                        if (maxMmi >= 0)
-                        {
-                            int mmiStage = 0;
-                            if (maxMmi >= 5)
-                            {
-                                mmiStage = 2;
-                            }
-                            else if (maxMmi >= 3)
-                            {
-                                mmiStage = 1;
-                            }
-
-                            g.DrawRectangle(m_mmiStagePens[mmiStage],
-                                left - ClusterPadding, top - ClusterPadding,
-                                right - left + ClusterPadding * 2, bottom - top + ClusterPadding * 2);
                         }
                     }
 
-                    // Wave
-                    if (m_prevPhase > 1
-                        && m_waveTick > 0.0f && m_waveTick < 2048.0f)
+                    if (maxMmi >= 0)
+                    {
+                        int mmiStage = 0;
+                        if (maxMmi >= 5)
+                        {
+                            mmiStage = 2;
+                        }
+                        else if (maxMmi >= 3)
+                        {
+                            mmiStage = 1;
+                        }
+
+                        g.DrawRectangle(m_mmiStagePens[mmiStage],
+                            left - ClusterPadding, top - ClusterPadding,
+                            right - left + ClusterPadding * 2, bottom - top + ClusterPadding * 2);
+                    }
+                }
+
+                // Wave
+                if (m_prevPhase > 1
+                    && m_waveTick > 0.0f && m_waveTick < 2048.0f)
+                {
+                    using (var sWavePen = new Gdi.Pen(Gdi.Color.FromArgb(255, 0, 0), 2.0f))
+                    using (var pWavePen = new Gdi.Pen(Gdi.Color.FromArgb(0, 0, 255), 2.0f))
+                    using (var radialPath = new Gdi2D.GraphicsPath())
                     {
                         // P
                         g.DrawEllipse(pWavePen, eqkX - m_waveTick * 2, eqkY - m_waveTick * 2,
-                            m_waveTick * 4, m_waveTick * 4);
+                        m_waveTick * 4, m_waveTick * 4);
 
                         // S
-                        g.DrawEllipse(sWavePen, eqkX - m_waveTick, eqkY - m_waveTick,
+                        radialPath.AddEllipse(eqkX - m_waveTick, eqkY - m_waveTick,
                             m_waveTick * 2, m_waveTick * 2);
+                        using (var gradBrush = new Gdi2D.PathGradientBrush(radialPath))
+                        {
+                            const float WaveThickness = 10.0f;
+                            if (m_waveTick > WaveThickness)
+                            {
+                                float focusScale = (m_waveTick - WaveThickness) / m_waveTick;
+                                gradBrush.FocusScales = new Gdi.PointF(focusScale, focusScale);
+                            }
+                            gradBrush.CenterColor = Gdi.Color.FromArgb(0, Gdi.Color.Red);
+                            gradBrush.SurroundColors = new[] { Gdi.Color.Red };
+                            g.FillEllipse(gradBrush, eqkX - m_waveTick, eqkY - m_waveTick,
+                                m_waveTick * 2, m_waveTick * 2);
+                        }
                     }
-
-                    // Epicenter
-                    if (m_prevPhase > 1
-                        && eqkX > -32 && eqkX < fWidth + 32
-                        && eqkY > -32 && eqkY < fHeight + 32)
-                    {
-                        g.FillEllipse(Gdi.Brushes.Blue, eqkX - 4, eqkY - 4, 8, 8);
-                        g.DrawEllipse(Gdi.Pens.Blue, eqkX - 8, eqkY - 8, 16, 16);
-                        g.DrawEllipse(Gdi.Pens.Blue, eqkX - 12, eqkY - 12, 24, 24);
-                    }
                 }
 
-                var hbmp = m_canvasBitmap.GetHbitmap();
-                try
+                // Epicenter
+                if (m_prevPhase > 1
+                    && eqkX > -32 && eqkX < fWidth + 32
+                    && eqkY > -32 && eqkY < fHeight + 32)
                 {
-                    var options = BitmapSizeOptions.FromEmptyOptions();
-                    canvas.Source = Imaging.CreateBitmapSourceFromHBitmap(hbmp, IntPtr.Zero, Int32Rect.Empty, options);
+                    g.FillEllipse(Gdi.Brushes.Blue, eqkX - 4, eqkY - 4, 8, 8);
+                    g.DrawEllipse(Gdi.Pens.Blue, eqkX - 8, eqkY - 8, 16, 16);
+                    g.DrawEllipse(Gdi.Pens.Blue, eqkX - 12, eqkY - 12, 24, 24);
                 }
-                finally
-                {
-                    Api.DeleteObject(hbmp);
-                }
+            }
+
+            var hbmp = m_canvasBitmap.GetHbitmap();
+            try
+            {
+                var options = BitmapSizeOptions.FromEmptyOptions();
+                canvas.Source = Imaging.CreateBitmapSourceFromHBitmap(hbmp, IntPtr.Zero, Int32Rect.Empty, options);
+            }
+            finally
+            {
+                Api.DeleteObject(hbmp);
             }
 
             canvas.InvalidateVisual();
