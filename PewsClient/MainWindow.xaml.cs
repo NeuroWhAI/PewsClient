@@ -100,6 +100,7 @@ namespace PewsClient
         private MediaPlayer[] m_wavNormal = new MediaPlayer[11];
         private MediaPlayer[] m_wavHigh = new MediaPlayer[11];
         private MediaPlayer[] m_wavUpdate = new MediaPlayer[11];
+        private MediaPlayer[] m_wavCountdown = new MediaPlayer[60 + 1];
 
         private Stopwatch m_tickStopwatch = new Stopwatch();
         private DispatcherTimer m_timer = new DispatcherTimer();
@@ -435,6 +436,9 @@ namespace PewsClient
 
                             ClearMmiLocationList();
 
+                            // 다음 상황 때 재생 가능하도록 초기화.
+                            ResetCountdownWav();
+
                             m_wavEnd.Stop();
                             m_wavEnd.Play();
                         }
@@ -672,6 +676,16 @@ namespace PewsClient
                 leftTime -= Math.Ceiling(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - (m_tide / 1000.0) - m_currEqkTime.ToUnixTimeSeconds());
 
                 UpdateEta(leftTime);
+
+                // 카운트다운 재생.
+                int time = (int)(Math.Ceiling(leftTime) + double.Epsilon);
+                if (time >= 0 && time < m_wavCountdown.Length
+                    && m_wavCountdown[time] != null)
+                {
+                    // 중복으로 호출될 수 있지만 기존 Play 중엔 영향이 없는 것을 이용.
+                    // 상황 종료 시 Stop 호출 필요.
+                    m_wavCountdown[time].Play();
+                }
             }
             else
             {
@@ -705,6 +719,7 @@ namespace PewsClient
             if (m_prevPhase > 1)
             {
                 UpdateHomeMmi(m_intensityGrid);
+                ResetCountdownWav();
             }
 
             SaveSettings();
@@ -816,6 +831,21 @@ namespace PewsClient
             loadWavForEachMmi("normal", (mmi, player) => m_wavNormal[mmi] = player);
             loadWavForEachMmi("high", (mmi, player) => m_wavHigh[mmi] = player);
             loadWavForEachMmi("update", (mmi, player) => m_wavUpdate[mmi] = player);
+
+            for (int time = 0; time < m_wavCountdown.Length; ++time)
+            {
+                string wavPath = $"res/time{time}.mp3";
+                if (File.Exists(wavPath))
+                {
+                    var player = new MediaPlayer();
+                    player.Open(new Uri(wavPath, UriKind.Relative));
+                    m_wavCountdown[time] = player;
+                }
+                else
+                {
+                    m_wavCountdown[time] = null;
+                }
+            }
 
             m_wavBeep.Volume = 0.25;
             m_wavBeep1.Volume = 0.25;
@@ -1418,6 +1448,18 @@ namespace PewsClient
                 else
                 {
                     lblHomeMmi.Text = $"진도 {Earthquake.MMIToString(mmi)}";
+                }
+            }
+        }
+
+        private void ResetCountdownWav()
+        {
+            for (int time = 0; time < m_wavCountdown.Length; ++time)
+            {
+                var wav = m_wavCountdown[time];
+                if (wav != null)
+                {
+                    wav.Stop();
                 }
             }
         }
