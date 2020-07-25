@@ -114,7 +114,7 @@ namespace PewsClient
 
         private int m_prevPhase = 1;
         private int m_phaseDownLeftTick = 0;
-        private readonly int PhaseDownDelay = 4;
+        private readonly int PhaseDownDelay = 8;
         private string m_prevAlarmId = string.Empty;
         private DateTimeOffset m_currEqkTime = DateTimeOffset.MinValue;
 
