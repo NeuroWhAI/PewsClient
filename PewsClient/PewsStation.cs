@@ -29,6 +29,12 @@ namespace PewsClient
         public double Latitude { get; set; } = 0;
 
         /// <summary>
+        /// 렌더링을 위한 MMI 값.
+        /// 0~10은 그대로 각 진도를 의미하지만 12~14는 세분화 된 진도 1을 의미.
+        /// </summary>
+        public int RawMmi { get; set; } = 0;
+
+        /// <summary>
         /// 진도
         /// </summary>
         public int Mmi { get; private set; } = 0;

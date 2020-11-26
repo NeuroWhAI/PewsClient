@@ -35,7 +35,7 @@ namespace PewsClient
         private const int MaxEqkStrLen = 60;
         private const int MaxEqkInfoLen = 120;
         private static string[] AreaNames = { "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주" };
-        private static string[] MmiColors = { "#FFFFFF", "#FFFFFF", "#A0E6FF", "#92D050", "#FFFF00", "#FFC000", "#FF0000", "#A32777", "#632523", "#4C2600", "#000000" };
+        private static string[] MmiColors = { "#FFFFFF", "#FFFFFF", "#A0E6FF", "#92D050", "#FFFF00", "#FFC000", "#FF0000", "#A32777", "#632523", "#4C2600", "#000000", "#000000", "#DFDFDF", "#BFBFBF", "#9F9F9F" };
 
         //#############################################################################################
 
@@ -147,7 +147,7 @@ namespace PewsClient
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
-            StartSimulation("2019009762", "20190721110418"); // 상주 3.9
+            //StartSimulation("2019009762", "20190721110418"); // 상주 3.9
             //StartSimulation("2019003859", "20190419111643"); // 동해 4.3
             //StartSimulation("2016000194", "20160705203303"); // 울산 5.0
             //StartSimulation("2019016848", "20191230003208"); // 밀양 3.5
@@ -295,7 +295,7 @@ namespace PewsClient
                     }
                     string header = headerBuff.ToString();
 
-                    var bodyBuff = new StringBuilder(ByteToBinStr(bytes[0]));
+                    var bodyBuff = new StringBuilder();
                     for (int i = HeadLength; i < bytes.Length; ++i)
                     {
                         bodyBuff.Append(ByteToBinStr(bytes[i]));
@@ -964,7 +964,7 @@ namespace PewsClient
                     else
                     {
                         // 평시.
-                        int mmi = stn.Mmi;
+                        int mmi = stn.RawMmi;
                         if (mmi >= 0 && mmi < m_mmiBrushes.Length)
                         {
                             var brush = m_mmiBrushes[mmi];
@@ -1654,15 +1654,14 @@ namespace PewsClient
 
             var mmiData = new List<int>();
 
-            string mmiBody = body.Split(new[] { "11111111" }, StringSplitOptions.None).First();
-            for (int i = 8; i < mmiBody.Length; i += 4)
+            for (int i = 0; i < body.Length; i += 4)
             {
                 if (mmiData.Count >= m_stations.Count)
                 {
                     break;
                 }
 
-                int mmi = Convert.ToInt32(mmiBody.Substring(i, 4), 2);
+                int mmi = Convert.ToInt32(body.Substring(i, 4), 2);
                 mmiData.Add(mmi);
             }
 
@@ -1675,10 +1674,30 @@ namespace PewsClient
             for (int i = 0; i < m_stations.Count; ++i)
             {
                 var stn = m_stations[i];
-                int mmi = mmiData[i];
+                int rawMmi = mmiData[i];
+
+                int mmi = rawMmi;
+                if (mmi < 0)
+                {
+                    // 음수일 수 없음.
+                    mmi = 0;
+                    rawMmi = 0;
+                }
+                else if (mmi > 11)
+                {
+                    // 세분화 된 진도 I.
+                    mmi = 1;
+                }
+                else if (mmi > 10)
+                {
+                    // 이도저도 아님.
+                    // PEWS 사이트에서는 진도 X에 해당하는 색을 의미하긴 함.
+                    mmi = 10;
+                }
 
                 int prevMaxMmi = stn.MaxMmi;
                 stn.UpdateMmi(mmi, phase, MaxMmiLifetime);
+                stn.RawMmi = rawMmi;
 
                 // 속보 상황이고 관측소 최대진도가 바뀌었으며 그것이 2 이상일 때
                 // 해당 지역 계측진도 갱신.
