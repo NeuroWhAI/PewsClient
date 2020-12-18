@@ -1799,8 +1799,21 @@ namespace PewsClient
             foreach (byte b in bytes)
             {
                 string bStr = ByteToBinStr(b);
-                m_intensityGrid.Add(Convert.ToInt32(bStr.Substring(0, 4), 2));
-                m_intensityGrid.Add(Convert.ToInt32(bStr.Substring(4, 4), 2));
+                for (int offset = 0; offset < 8; offset += 4)
+                {
+                    int mmi = Convert.ToInt32(bStr.Substring(offset, 4), 2);
+                    if (mmi < 0)
+                    {
+                        mmi = 0;
+                    }
+                    else if (mmi > 11)
+                    {
+                        // 세분화 된 진도 I.
+                        mmi = 1;
+                    }
+
+                    m_intensityGrid.Add(mmi);
+                }
             }
 
             // 예상 도달 진도 계산.
