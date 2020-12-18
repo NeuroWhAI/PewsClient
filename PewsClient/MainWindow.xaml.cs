@@ -132,7 +132,7 @@ namespace PewsClient
         private int m_maxMmi = 1;
         private List<List<int>> m_stnClusters = new List<List<int>>();
         private readonly int MinClusterSize = 3;
-        private readonly double ClusterDistance = 40.0;
+        private readonly double ClusterDistance = 60.0;
 
         //#############################################################################################
 
@@ -154,7 +154,7 @@ namespace PewsClient
             //StartSimulation("2019001035", "20190210125338"); // 포항 4.1
             //StartSimulation("2018000050", "20180211050303"); // 포항 4.6
             //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
-            StartSimulation("2020018042", "20201218171723"); // 강원 2.7
+            //StartSimulation("2020018042", "20201218171723"); // 강원 2.7
 #endif
 
             LoadResources();
