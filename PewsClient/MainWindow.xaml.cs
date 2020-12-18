@@ -154,6 +154,7 @@ namespace PewsClient
             //StartSimulation("2019001035", "20190210125338"); // 포항 4.1
             //StartSimulation("2018000050", "20180211050303"); // 포항 4.6
             //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
+            StartSimulation("2020018042", "20201218171723"); // 강원 2.7
 #endif
 
             LoadResources();
@@ -782,6 +783,7 @@ namespace PewsClient
                 .ToArray();
             m_mmiStagePens = new Gdi.Pen[]
             {
+                new Gdi.Pen(Gdi.Color.LightSeaGreen, 3.5f),
                 new Gdi.Pen(Gdi.Color.Green, 3.5f),
                 new Gdi.Pen(Gdi.Color.Yellow, 3.5f),
                 new Gdi.Pen(Gdi.Color.FromArgb(0xff, 0x10, 0x00), 3.5f),
@@ -1046,9 +1048,13 @@ namespace PewsClient
                         int mmiStage = 0;
                         if (maxMmi >= 5)
                         {
-                            mmiStage = 2;
+                            mmiStage = 3;
                         }
                         else if (maxMmi >= 3)
+                        {
+                            mmiStage = 2;
+                        }
+                        else if (maxMmi >= 2)
                         {
                             mmiStage = 1;
                         }
@@ -1738,7 +1744,8 @@ namespace PewsClient
                         var stn = m_stations[current];
                         int mmi = stn.Mmi;
 
-                        if (mmi < 2)
+                        // 진도 2 이상이거나 진도 1 안에서 큰 축에 속하는 경우에만 노드로 취급.
+                        if (mmi < 2 && stn.RawMmi < 14)
                         {
                             continue;
                         }
