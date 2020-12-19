@@ -129,10 +129,10 @@ namespace PewsClient
         private List<int> m_intensityGrid = new List<int>();
         private bool m_updateGrid = false;
 
-        private int m_maxMmi = 1;
+        private int m_maxMmi = 0;
         private List<List<int>> m_stnClusters = new List<List<int>>();
         private readonly int MinClusterSize = 3;
-        private readonly double ClusterDistance = 60.0;
+        private readonly double ClusterDistance = 50.0;
 
         //#############################################################################################
 
@@ -535,20 +535,25 @@ namespace PewsClient
                                     }
                                 }
 
-                                if (clusterMmi >= maxMmi)
+                                // 클러스터의 최대진도가 1보다 크거나
+                                // 크기가 기준의 n배 이상일 경우 유효함.
+                                if (clusterMmi > 1 || cluster.Count >= MinClusterSize * 4)
                                 {
-                                    // 최대진도와 같다는 것을 확인하였으니 바로 탈출.
-                                    maxClusterMmi = clusterMmi;
-                                    break;
-                                }
-                                else if (clusterMmi > maxClusterMmi)
-                                {
-                                    maxClusterMmi = clusterMmi;
+                                    if (clusterMmi >= maxMmi)
+                                    {
+                                        // 전역 최대진도와 같다는 것을 확인하였으니 바로 탈출.
+                                        maxClusterMmi = clusterMmi;
+                                        break;
+                                    }
+                                    else if (clusterMmi > maxClusterMmi)
+                                    {
+                                        maxClusterMmi = clusterMmi;
+                                    }
                                 }
                             }
 
                             maxMmi = maxClusterMmi;
-                            if (maxClusterMmi >= 2)
+                            if (maxClusterMmi >= 1)
                             {
                                 eqkMayOccured = true;
                             }
@@ -592,7 +597,7 @@ namespace PewsClient
                     else
                     {
                         m_beepLevel = 0;
-                        m_maxMmi = 1;
+                        m_maxMmi = 0;
                         UpdateEqkMmiPanel(-1);
                         m_stnClusters.Clear();
                         HideWarningHint();
@@ -1043,7 +1048,9 @@ namespace PewsClient
                         }
                     }
 
-                    if (maxMmi >= 0)
+                    // 클러스터의 최대진도가 1 이상이고
+                    // 1 이하일 땐 클러스터 크기가 기준의 n배 이상일 때만 표시.
+                    if (maxMmi >= 1 && (maxMmi > 1 || cluster.Count >= MinClusterSize * 2))
                     {
                         int mmiStage = 0;
                         if (maxMmi >= 5)
@@ -1212,7 +1219,7 @@ namespace PewsClient
 
             UpdateEqkMmiPanel(-1);
 
-            m_maxMmi = 1; // 다음에 계측진도가 처음부터 갱신될 수 있도록 초기화.
+            m_maxMmi = 0; // 다음에 계측진도가 처음부터 갱신될 수 있도록 초기화.
         }
 
         private void UpdateEqkMmiPanel(int mmi)
@@ -1523,7 +1530,7 @@ namespace PewsClient
             {
                 if (phase == 2)
                 {
-                    // 발생 시각, 규모, 최대 진도, 문구 정도는 부정확할 수 있어도 첫 정보에 포함되는 듯.
+                    // 발생 시각, 규모, 최대진도, 문구 정도는 부정확할 수 있어도 첫 정보에 포함되는 듯.
 
                     if (eqkIntens >= 0 && eqkIntens < m_wavHigh.Length)
                     {
@@ -1734,12 +1741,11 @@ namespace PewsClient
 
                     var leftStns = new Queue<int>();
                     leftStns.Enqueue(i);
+                    visited[i] = true;
 
                     while (leftStns.Count > 0)
                     {
                         int current = leftStns.Dequeue();
-
-                        visited[current] = true;
 
                         var stn = m_stations[current];
                         int mmi = stn.Mmi;
@@ -1760,6 +1766,7 @@ namespace PewsClient
                             }
 
                             leftStns.Enqueue(next);
+                            visited[next] = true;
                         }
                     }
 
