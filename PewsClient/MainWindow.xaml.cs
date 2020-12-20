@@ -993,6 +993,8 @@ namespace PewsClient
                                 LineAlignment = Gdi.StringAlignment.Center,
                             };
 
+                            x += 4;
+                            y += 4;
                             g.FillEllipse(brush, x - 11, y - 11, 22, 22);
                             g.DrawString(Earthquake.MMIToString(stn.MaxMmi), m_mmiFont,
                                 backBrush, x + 0.5f, y + 0.5f, stringFormat);
