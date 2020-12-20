@@ -13,7 +13,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Net;
@@ -73,6 +72,7 @@ namespace PewsClient
         private readonly TimeSpan TimeoutGrid = TimeSpan.FromMilliseconds(6000);
 
         private bool m_simMode = false;
+        private bool m_localSim = false;
         private DateTime m_simEndTime = DateTime.MinValue;
 
         private Gdi.Font m_mmiFont = new Gdi.Font(Gdi.SystemFonts.DefaultFont.FontFamily, 10.5f, Gdi.FontStyle.Bold);
@@ -155,6 +155,8 @@ namespace PewsClient
             //StartSimulation("2018000050", "20180211050303"); // 포항 4.6
             //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
             //StartSimulation("2020018042", "20201218171723"); // 강원 2.7
+
+            //StartSimulation("2020123456", "20201220162654", true); // 가상
 #endif
 
             LoadResources();
@@ -225,59 +227,76 @@ namespace PewsClient
 
                 byte[] bytes = null;
 
-                using (var client = new TimeoutWebClient(TimeoutBin))
+                if (m_localSim)
                 {
-                    try
-                    {
-                        bytes = await client.DownloadDataTaskAsync(url + ".b");
-                    }
-                    catch (Exception err)
-                    {
-                        if (err is WebException || err is TimeoutException)
-                        {
-                            txtStatus.Text = "Loading";
+                    txtTimeSync.Text = $"Sync: Paused";
 
-                            if (!m_simMode)
+                    string path = Path.Combine("sim", binTimeStr + ".b");
+                    if (File.Exists(path))
+                    {
+                        bytes = File.ReadAllBytes(path);
+                    }
+                    else
+                    {
+                        StopSimulation();
+                    }
+                }
+                else
+                {
+                    using (var client = new TimeoutWebClient(TimeoutBin))
+                    {
+                        try
+                        {
+                            bytes = await client.DownloadDataTaskAsync(url + ".b");
+                        }
+                        catch (Exception err)
+                        {
+                            if (err is WebException || err is TimeoutException)
                             {
-                                if (!SyncTime())
+                                txtStatus.Text = "Loading";
+
+                                if (!m_simMode)
                                 {
-                                    // 서버 시간과 동기화 실패 시 적절히 오프셋 조정.
-                                    if (m_tide < 1000)
+                                    if (!SyncTime())
                                     {
-                                        m_tide += 200;
+                                        // 서버 시간과 동기화 실패 시 적절히 오프셋 조정.
+                                        if (m_tide < 1000)
+                                        {
+                                            m_tide += 200;
+                                        }
+                                        else
+                                        {
+                                            m_tide -= 200;
+                                        }
+                                        txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                                     }
-                                    else
-                                    {
-                                        m_tide -= 200;
-                                    }
-                                    txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
                                 }
                             }
+                            else
+                            {
+                                txtStatus.Text = "Error";
+                            }
+
+                            return;
                         }
-                        else
+
+
+                        if (m_simMode)
                         {
-                            txtStatus.Text = "Error";
+                            txtTimeSync.Text = $"Sync: Paused";
                         }
-
-                        return;
-                    }
-
-
-                    if (m_simMode)
-                    {
-                        txtTimeSync.Text = $"Sync: Paused";
-                    }
-                    else if (DateTime.UtcNow >= m_nextSyncTime)
-                    {
-                        // 시간 동기화.
-                        m_nextSyncTime = DateTime.UtcNow + TimeSpan.FromSeconds(10.0);
-
-                        string stStr = client.ResponseHeaders.Get("ST");
-                        if (!string.IsNullOrWhiteSpace(stStr)
-                            && double.TryParse(stStr, out double serverTime))
+                        else if (DateTime.UtcNow >= m_nextSyncTime)
                         {
-                            m_tide = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - serverTime * 1000 + 1000;
-                            txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
+                            // 시간 동기화.
+                            m_nextSyncTime = DateTime.UtcNow + TimeSpan.FromSeconds(10.0);
+
+                            string stStr = client.ResponseHeaders.Get("ST");
+                            if (!string.IsNullOrWhiteSpace(stStr)
+                                && double.TryParse(stStr, out double serverTime))
+                            {
+                                m_tide = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - serverTime * 1000 + 1000;
+                                txtTimeSync.Text = $"Sync: {Math.Round(m_tide):F0}ms";
+                            }
                         }
                     }
                 }
@@ -453,19 +472,30 @@ namespace PewsClient
                     {
                         byte[] stnBytes = null;
 
-                        using (var client = new TimeoutWebClient(TimeoutStation))
+                        if (m_localSim)
                         {
-                            for (int retry = 0; retry <= 2; ++retry)
+                            string path = Path.Combine("sim","stations.s");
+                            if (File.Exists(path))
                             {
-                                try
+                                stnBytes = File.ReadAllBytes(path);
+                            }
+                        }
+                        else
+                        {
+                            using (var client = new TimeoutWebClient(TimeoutStation))
+                            {
+                                for (int retry = 0; retry <= 2; ++retry)
                                 {
-                                    stnBytes = await client.DownloadDataTaskAsync(url + ".s");
-                                    break;
-                                }
-                                catch
-                                {
-                                    stnBytes = null;
-                                    await Task.Delay(300);
+                                    try
+                                    {
+                                        stnBytes = await client.DownloadDataTaskAsync(url + ".s");
+                                        break;
+                                    }
+                                    catch
+                                    {
+                                        stnBytes = null;
+                                        await Task.Delay(300);
+                                    }
                                 }
                             }
                         }
@@ -1128,11 +1158,12 @@ namespace PewsClient
             canvas.InvalidateVisual();
         }
 
-        private void StartSimulation(string eqkId, string eqkStartTime)
+        private void StartSimulation(string eqkId, string eqkStartTime, bool local = false)
         {
             var startTime = DateTime.ParseExact(eqkStartTime, "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
 
             m_simMode = true;
+            m_localSim = local;
             m_simEndTime = startTime.AddHours(-9) + TimeSpan.FromSeconds(300);
 
             HeadLength = 1;
@@ -1143,6 +1174,7 @@ namespace PewsClient
         private void StopSimulation()
         {
             m_simMode = false;
+            m_localSim = false;
 
             HeadLength = 4;
             DataPath = "https://www.weather.go.kr/pews/data";
@@ -1779,15 +1811,25 @@ namespace PewsClient
 
         private async Task RequestGridData(string eqkId, int phase)
         {
-            string url = $"{DataPath}/{eqkId}.{(phase == 2 ? 'e' : 'i')}";
-
             byte[] bytes = null;
 
             try
             {
-                using (var client = new TimeoutWebClient(TimeoutGrid))
+                if (m_localSim)
                 {
-                    bytes = await client.DownloadDataTaskAsync(url);
+                    string path = Path.Combine("sim", $"{eqkId}.{(phase == 2 ? 'e' : 'i')}");
+                    if (File.Exists(path))
+                    {
+                        bytes = File.ReadAllBytes(path);
+                    }
+                }
+                else
+                {
+                    using (var client = new TimeoutWebClient(TimeoutGrid))
+                    {
+                        string url = $"{DataPath}/{eqkId}.{(phase == 2 ? 'e' : 'i')}";
+                        bytes = await client.DownloadDataTaskAsync(url);
+                    }
                 }
             }
             catch
