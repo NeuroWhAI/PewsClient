@@ -1118,7 +1118,7 @@ namespace PewsClient
                     {
                         // P
                         g.DrawEllipse(pWavePen, eqkX - m_waveTick * 2, eqkY - m_waveTick * 2,
-                        m_waveTick * 4, m_waveTick * 4);
+                            m_waveTick * 4, m_waveTick * 4);
 
                         // S
                         radialPath.AddEllipse(eqkX - m_waveTick, eqkY - m_waveTick,
