@@ -29,12 +29,14 @@ namespace PewsClient
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string DataPath = "https://www.weather.go.kr/pews/data";
+        private static readonly string OrgDataPath = "https://www.weather.go.kr/pews/data";
+        private string DataPath = OrgDataPath;
         private int HeadLength = 4;
         private const int MaxEqkStrLen = 60;
         private const int MaxEqkInfoLen = 120;
         private static string[] AreaNames = { "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주" };
         private static string[] MmiColors = { "#FFFFFF", "#FFFFFF", "#A0E6FF", "#92D050", "#FFFF00", "#FFC000", "#FF0000", "#A32777", "#632523", "#4C2600", "#000000", "#000000", "#DFDFDF", "#BFBFBF", "#9F9F9F" };
+        private static readonly string SimFolder = "sim";
 
         //#############################################################################################
 
@@ -144,6 +146,8 @@ namespace PewsClient
 
             SyncTime();
 
+            StartLocalSimIfExists();
+
 #if DEBUG
             //StartSimulation("2017000407", "20171115142931"); // 포항 5.4
             //StartSimulation("2016000291", "20160912203254"); // 경주 5.8
@@ -156,7 +160,7 @@ namespace PewsClient
             //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
             //StartSimulation("2020018042", "20201218171723"); // 강원 2.7
 
-            StartSimulation("2020123456", "20000101090002", true); // 가상
+            //StartSimulation("2020123456", "20000101090002", true); // 가상
 #endif
 
             LoadResources();
@@ -231,7 +235,7 @@ namespace PewsClient
                 {
                     txtTimeSync.Text = $"Sync: Paused";
 
-                    string path = Path.Combine("sim", binTimeStr + ".b");
+                    string path = Path.Combine(SimFolder, binTimeStr + ".b");
                     if (File.Exists(path))
                     {
                         bytes = File.ReadAllBytes(path);
@@ -474,7 +478,7 @@ namespace PewsClient
 
                         if (m_localSim)
                         {
-                            string path = Path.Combine("sim","stations.s");
+                            string path = Path.Combine(SimFolder, "stations.s");
                             if (File.Exists(path))
                             {
                                 stnBytes = File.ReadAllBytes(path);
@@ -1169,7 +1173,7 @@ namespace PewsClient
             m_simEndTime = startTime.AddHours(-9) + TimeSpan.FromSeconds(300);
 
             HeadLength = 1;
-            DataPath += $"/{eqkId}";
+            DataPath = OrgDataPath + $"/{eqkId}";
             m_tide = (DateTime.UtcNow.AddHours(9) - startTime).TotalMilliseconds;
         }
 
@@ -1179,10 +1183,44 @@ namespace PewsClient
             m_localSim = false;
 
             HeadLength = 4;
-            DataPath = "https://www.weather.go.kr/pews/data";
+            DataPath = OrgDataPath;
             m_tide = 1000;
 
+            m_phaseDownLeftTick = 1; // Phase 유지 안 하고 바로 낮추도록 함.
+
             m_stationUpdate = true;
+        }
+
+        private void StartLocalSimIfExists()
+        {
+            try
+            {
+                if (!File.Exists(Path.Combine(SimFolder, "stations.s")))
+                {
+                    return;
+                }
+
+                string bFile = Directory.EnumerateFiles(SimFolder, "*.b").Skip(2).FirstOrDefault();
+                string eFile = Directory.EnumerateFiles(SimFolder, "*.e").FirstOrDefault();
+
+                if (string.IsNullOrEmpty(bFile) || string.IsNullOrEmpty(eFile))
+                {
+                    return;
+                }
+
+                string id = Path.GetFileNameWithoutExtension(eFile);
+
+                string startTimeStr = Path.GetFileNameWithoutExtension(bFile);
+                var startTime = DateTime.ParseExact(startTimeStr, "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+                startTime += TimeSpan.FromHours(9);
+                startTimeStr = startTime.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+
+                StartSimulation(id, startTimeStr, true);
+            }
+            catch
+            {
+                StopSimulation();
+            }
         }
 
         private void ShowEqkInfo()
@@ -1819,7 +1857,7 @@ namespace PewsClient
             {
                 if (m_localSim)
                 {
-                    string path = Path.Combine("sim", $"{eqkId}.{(phase == 2 ? 'e' : 'i')}");
+                    string path = Path.Combine(SimFolder, $"{eqkId}.{(phase == 2 ? 'e' : 'i')}");
                     if (File.Exists(path))
                     {
                         bytes = File.ReadAllBytes(path);
