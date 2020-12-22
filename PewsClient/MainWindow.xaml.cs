@@ -238,11 +238,19 @@ namespace PewsClient
                     string path = Path.Combine(SimFolder, binTimeStr + ".b");
                     if (File.Exists(path))
                     {
-                        bytes = File.ReadAllBytes(path);
-                    }
-                    else
-                    {
-                        StopSimulation();
+                        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            if (fs.Length > 0)
+                            {
+                                bytes = new byte[fs.Length];
+                                int readBytes = 0;
+
+                                while (readBytes < bytes.Length)
+                                {
+                                    readBytes += await fs.ReadAsync(bytes, readBytes, bytes.Length - readBytes);
+                                }
+                            }
+                        }
                     }
                 }
                 else
