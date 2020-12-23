@@ -490,6 +490,7 @@ namespace PewsClient
                             if (File.Exists(path))
                             {
                                 stnBytes = File.ReadAllBytes(path);
+                                m_stationUpdate = false;
                             }
                         }
                         else
