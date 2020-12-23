@@ -69,9 +69,9 @@ namespace PewsClient
         private readonly string SettingFileName = "settings.txt";
         private UserOption m_option = new UserOption();
 
-        private readonly TimeSpan TimeoutBin = TimeSpan.FromMilliseconds(3000);
-        private readonly TimeSpan TimeoutStation = TimeSpan.FromMilliseconds(6000);
-        private readonly TimeSpan TimeoutGrid = TimeSpan.FromMilliseconds(6000);
+        private readonly TimeSpan TimeoutBin = TimeSpan.FromMilliseconds(2000);
+        private readonly TimeSpan TimeoutStation = TimeSpan.FromMilliseconds(3000);
+        private readonly TimeSpan TimeoutGrid = TimeSpan.FromMilliseconds(5000);
 
         private bool m_simMode = false;
         private bool m_localSim = false;
@@ -496,7 +496,7 @@ namespace PewsClient
                         {
                             using (var client = new TimeoutWebClient(TimeoutStation))
                             {
-                                for (int retry = 0; retry <= 2; ++retry)
+                                for (int retry = 0; retry <= 1; ++retry)
                                 {
                                     try
                                     {
