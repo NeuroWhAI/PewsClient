@@ -121,6 +121,8 @@ namespace PewsClient
         private DateTimeOffset m_currEqkTime = DateTimeOffset.MinValue;
 
         private bool m_stationUpdate = true;
+        private DateTime m_nextStationUpdate = DateTime.MaxValue;
+        private readonly TimeSpan AutoStationUpdateDelay = TimeSpan.FromSeconds(20);
         private List<PewsStation> m_stations = new List<PewsStation>();
         private readonly TimeSpan MaxMmiLifetime = TimeSpan.FromSeconds(60);
         private StationDatabase m_stationDb = new StationDatabase();
@@ -335,8 +337,24 @@ namespace PewsClient
                     string body = bodyBuff.ToString();
 
 
-                    // 관측소 정보 업데이트 신호 확인.
-                    m_stationUpdate = (m_stationUpdate || (header[0] == '1'));
+                    if (header[0] == '1')
+                    {
+                        // 관측소 정보 업데이트 신호 확인.
+                        m_stationUpdate = true;
+                        if (!m_simMode)
+                        {
+                            m_nextStationUpdate = binTime + AutoStationUpdateDelay;
+                        }
+                    }
+                    else if (binTime >= m_nextStationUpdate)
+                    {
+                        // 관측소 정보 업데이트 후 일정 시간 뒤에 한번 더 업데이트.
+                        if (!m_simMode)
+                        {
+                            m_stationUpdate = true;
+                        }
+                        m_nextStationUpdate = DateTime.MaxValue;
+                    }
 
                     int phase = 0;
                     if (header[1] == '0')
@@ -1198,6 +1216,7 @@ namespace PewsClient
             m_phaseDownLeftTick = 1; // Phase 유지 안 하고 바로 낮추도록 함.
 
             m_stationUpdate = true;
+            m_nextStationUpdate = DateTime.MaxValue;
         }
 
         private void StartLocalSimIfExists()
