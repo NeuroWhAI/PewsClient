@@ -544,8 +544,8 @@ namespace PewsClient
                     }
 
 
-                    // 관측소 데이터가 있으면 관측소 진도 분석.
-                    if (m_stations.Count > 0)
+                    // 관측소 목록이 있고 위에서 관측소 데이터 갱신시 성공했다면 관측소 진도 분석.
+                    if (m_stations.Count > 0 && !m_stationUpdate)
                     {
                         int maxMmi = HandleMmi(body, phase);
 
@@ -1764,11 +1764,10 @@ namespace PewsClient
             {
                 return maxMmi;
             }
-
-            int mmiDataCnt = (body.Length - (MaxEqkStrLen * 8 + MaxEqkInfoLen)) / 4;
+            
             var mmiData = new List<int>();
 
-            for (int i = 0; i < mmiDataCnt * 4; i += 4)
+            for (int i = 0; i < body.Length; i += 4)
             {
                 if (mmiData.Count >= m_stations.Count)
                 {
