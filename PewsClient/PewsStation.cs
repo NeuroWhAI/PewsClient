@@ -21,12 +21,40 @@ namespace PewsClient
         /// <summary>
         /// 경도
         /// </summary>
-        public double Longitude { get; set; } = 0;
+        public double Longitude
+        {
+            get => m_longitude;
+            set
+            {
+                m_longitude = value;
+                X = Util.LonToX(value);
+            }
+        }
+        private double m_longitude = 0;
 
         /// <summary>
         /// 위도
         /// </summary>
-        public double Latitude { get; set; } = 0;
+        public double Latitude
+        {
+            get => m_latitude;
+            set
+            {
+                m_latitude = value;
+                Y = Util.LatToY(value);
+            }
+        }
+        private double m_latitude = 0;
+
+        /// <summary>
+        /// 지도 이미지에서의 X 위치.
+        /// </summary>
+        public double X { get; private set; } = 0;
+
+        /// <summary>
+        /// 지도 이미지에서의 Y 위치.
+        /// </summary>
+        public double Y { get; private set; } = 0;
 
         /// <summary>
         /// 렌더링을 위한 MMI 값.
@@ -35,14 +63,29 @@ namespace PewsClient
         public int RawMmi { get; set; } = 0;
 
         /// <summary>
+        /// 진도 데이터를 빠르게 접근하기 위한 배열.
+        /// </summary>
+        public int[] MmiData { get; } = new int[2] { 0, 1 };
+        public static readonly int IndexMmi = 0;
+        public static readonly int IndexMaxMmi = 1;
+
+        /// <summary>
         /// 진도
         /// </summary>
-        public int Mmi { get; private set; } = 0;
+        public int Mmi
+        {
+            get => MmiData[0];
+            private set => MmiData[0] = value;
+        }
 
         /// <summary>
         /// 최대 진도
         /// </summary>
-        public int MaxMmi { get; private set; } = 1;
+        public int MaxMmi
+        {
+            get => MmiData[1];
+            private set => MmiData[1] = value;
+        }
 
         /// <summary>
         /// 클러스터 분석을 위한 인근 관측소 번호들.

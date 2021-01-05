@@ -22,6 +22,8 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
+using static PewsClient.Util;
+
 namespace PewsClient
 {
     /// <summary>
@@ -132,6 +134,7 @@ namespace PewsClient
 
         private List<int> m_intensityGrid = new List<int>();
         private bool m_updateGrid = false;
+        private List<List<double>> m_intensityWeights = new List<List<double>>();
 
         private int m_maxMmi = 0;
         private List<List<int>> m_stnClusters = new List<List<int>>();
@@ -820,6 +823,52 @@ namespace PewsClient
             SaveSettings();
         }
 
+        private void CheckBoxGridNone_Click(object sender, RoutedEventArgs e)
+        {
+            CheckBoxGrid_Click(sender as MenuItem, RtGridModes.None);
+
+            if (m_prevPhase <= 1)
+            {
+                m_intensityGrid.Clear();
+            }
+        }
+
+        private void CheckBoxGridCurrent_Click(object sender, RoutedEventArgs e)
+        {
+            CheckBoxGrid_Click(sender as MenuItem, RtGridModes.Current);
+        }
+
+        private void CheckBoxGridMax_Click(object sender, RoutedEventArgs e)
+        {
+            CheckBoxGrid_Click(sender as MenuItem, RtGridModes.Max);
+        }
+
+        private void CheckBoxGrid_Click(MenuItem menu, RtGridModes mode)
+        {
+            if (menu.IsChecked)
+            {
+                if (chkGridNone != menu)
+                {
+                    chkGridNone.IsChecked = false;
+                }
+                if (chkGridCurrent != menu)
+                {
+                    chkGridCurrent.IsChecked = false;
+                }
+                if (chkGridMax != menu)
+                {
+                    chkGridMax.IsChecked = false;
+                }
+
+                m_option.RtGridMode = mode;
+                SaveSettings();
+            }
+            else
+            {
+                menu.IsChecked = true;
+            }
+        }
+
         //#############################################################################################
 
         private bool SyncTime()
@@ -932,6 +981,10 @@ namespace PewsClient
                 MessageBox.Show("설정을 완전하게 불러올 수 없습니다.\nError: " + e.Message,
                     "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+
+            chkGridNone.IsChecked = (m_option.RtGridMode == RtGridModes.None);
+            chkGridCurrent.IsChecked = (m_option.RtGridMode == RtGridModes.Current);
+            chkGridMax.IsChecked = (m_option.RtGridMode == RtGridModes.Max);
         }
 
         private void SaveSettings()
@@ -971,6 +1024,11 @@ namespace PewsClient
 
                 // Intensity
                 var mmiIterator = m_intensityGrid.GetEnumerator();
+                int minMmi = 0;
+                if (m_prevPhase <= 1)
+                {
+                    minMmi = 2;
+                }
                 bool isEnd = false;
                 for (double i = 38.85; i > 33; i -= 0.05)
                 {
@@ -984,7 +1042,7 @@ namespace PewsClient
 
                         int mmi = mmiIterator.Current;
 
-                        if (mmi >= 0 && mmi < m_mmiBrushes.Length)
+                        if (mmi >= minMmi && mmi < m_mmiBrushes.Length)
                         {
                             var brush = m_mmiBrushes[mmi];
                             float x = (float)(LonToX(j) - 4);
@@ -1007,8 +1065,8 @@ namespace PewsClient
                 var stations = (m_prevPhase == 2 ? m_stations.OrderBy((s) => s.MaxMmi).AsEnumerable() : m_stations);
                 foreach (var stn in stations)
                 {
-                    float x = (float)(LonToX(stn.Longitude) - 4);
-                    float y = (float)(LatToY(stn.Latitude) - 4);
+                    float x = (float)(stn.X - 4);
+                    float y = (float)(stn.Y - 4);
 
                     if (m_prevPhase == 2 && stn.MaxMmi >= 2)
                     {
@@ -1073,8 +1131,8 @@ namespace PewsClient
                         }
 
                         var stn = m_stations[stnIdx];
-                        float x = (float)LonToX(stn.Longitude);
-                        float y = (float)LatToY(stn.Latitude);
+                        float x = (float)stn.X;
+                        float y = (float)stn.Y;
 
                         if (stn.Mmi > maxMmi)
                         {
@@ -1733,21 +1791,54 @@ namespace PewsClient
             {
                 var center = m_stations[i];
 
-                double centerX = LonToX(center.Longitude);
-                double centerY = LatToY(center.Latitude);
+                double centerX = center.X;
+                double centerY = center.Y;
 
                 for (int j = i + 1; j < m_stations.Count; ++j)
                 {
                     var other = m_stations[j];
 
-                    double subX = LonToX(other.Longitude) - centerX;
-                    double subY = LatToY(other.Latitude) - centerY;
+                    double subX = other.X - centerX;
+                    double subY = other.Y - centerY;
 
                     double distanceSqr = subX * subX + subY * subY;
                     if (distanceSqr < ClusterDistance * ClusterDistance)
                     {
                         center.Nodes.Add(j);
                         other.Nodes.Add(i);
+                    }
+                }
+            }
+
+            // IDW 보간을 위한 그리드 셀-관측소간 가중치 계산.
+            m_intensityWeights.Clear();
+            for (double i = 38.85; i > 33; i -= 0.05)
+            {
+                for (double j = 124.5; j < 132.05; j += 0.05)
+                {
+                    float x = (float)LonToX(j);
+                    float y = (float)(LatToY(i) - 3);
+
+                    var weights = new List<double>();
+                    weights.Add(0.0);
+
+                    m_intensityWeights.Add(weights);
+
+                    foreach (var stn in m_stations)
+                    {
+                        double subX = x - stn.X;
+                        double subY = y - stn.Y;
+                        double distanceSq = subX * subX + subY * subY;
+
+                        if (distanceSq < 1.0)
+                        {
+                            weights.Add(1.0);
+                        }
+                        else
+                        {
+                            weights.Add(1.0 / (distanceSq * distanceSq * distanceSq));
+                        }
+                        weights[0] += weights[weights.Count - 1];
                     }
                 }
             }
@@ -1874,7 +1965,49 @@ namespace PewsClient
                 }
             }
 
+            // 실시간 진도 그리드 계산.
+            if (phase <= 1 && m_option.RtGridMode != RtGridModes.None)
+            {
+                if (m_option.RtGridMode == RtGridModes.Current)
+                {
+                    UpdateRealtimeGrid(PewsStation.IndexMmi);
+                }
+                else if (m_option.RtGridMode == RtGridModes.Max)
+                {
+                    UpdateRealtimeGrid(PewsStation.IndexMaxMmi);
+                }
+            }
+
             return maxMmi;
+        }
+
+        private void UpdateRealtimeGrid(int mmiIndex)
+        {
+            m_intensityGrid.Clear();
+
+            int w = 0;
+            for (double i = 38.85; i > 33; i -= 0.05)
+            {
+                for (double j = 124.5; j < 132.05; j += 0.05)
+                {
+                    if (w >= m_intensityWeights.Count)
+                    {
+                        break;
+                    }
+                    var weights = m_intensityWeights[w];
+                    w += 1;
+
+                    int minCnt = Math.Min(weights.Count - 1, m_stations.Count);
+                    double sum = 0;
+                    for (int z = 0; z < minCnt; z++)
+                    {
+                        sum += weights[1 + z] * m_stations[z].MmiData[mmiIndex];
+                    }
+                    int mmi = (int)Math.Round(sum / weights[0]);
+
+                    m_intensityGrid.Add(mmi);
+                }
+            }
         }
 
         private async Task RequestGridData(string eqkId, int phase)
@@ -1940,26 +2073,6 @@ namespace PewsClient
         }
 
         //#############################################################################################
-
-        private double LonToX(double longitude)
-        {
-            return (longitude - 124.5) * 113;
-        }
-
-        private double LatToY(double latitude)
-        {
-            return (38.9 - latitude) * 138.4;
-        }
-
-        private double XToLon(double x)
-        {
-            return x / 113 + 124.5;
-        }
-
-        private double YToLat(double y)
-        {
-            return -y / 138.4 + 38.9;
-        }
 
         private Gdi.Color HexCodeToColor(string code)
         {

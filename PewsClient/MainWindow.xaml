@@ -38,6 +38,15 @@
                     <Separator/>
                     <MenuItem x:Name="chkSetLocation" Header="위치 설정 모드" IsCheckable="True"></MenuItem>
                     <MenuItem Header="위치 제거" Click="MenuItemRemoveHome_Click"></MenuItem>
+                    <Separator/>
+                    <MenuItem Header="진도 시각화">
+                        <MenuItem x:Name="chkGridNone" Header="없음" IsCheckable="True"
+                                  Click="CheckBoxGridNone_Click"></MenuItem>
+                        <MenuItem x:Name="chkGridCurrent" Header="실시간" IsCheckable="True"
+                                  Click="CheckBoxGridCurrent_Click"></MenuItem>
+                        <MenuItem x:Name="chkGridMax" Header="최댓값" IsCheckable="True"
+                                  Click="CheckBoxGridMax_Click"></MenuItem>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
         </Grid>
