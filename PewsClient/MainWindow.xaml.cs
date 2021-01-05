@@ -1249,7 +1249,7 @@ namespace PewsClient
             canvas.InvalidateVisual();
         }
 
-        private void StartSimulation(string eqkId, string eqkStartTime, bool local = false)
+        private void StartSimulation(string eqkId, string eqkStartTime, bool local = false, int headLen = 1)
         {
             var startTime = DateTime.ParseExact(eqkStartTime, "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
 
@@ -1257,7 +1257,7 @@ namespace PewsClient
             m_localSim = local;
             m_simEndTime = startTime.AddHours(-9) + TimeSpan.FromSeconds(300);
 
-            HeadLength = 1;
+            HeadLength = headLen;
             DataPath = OrgDataPath + $"/{eqkId}";
             m_tide = (DateTime.UtcNow.AddHours(9) - startTime).TotalMilliseconds;
         }
@@ -1301,7 +1301,22 @@ namespace PewsClient
                 startTime += TimeSpan.FromHours(9);
                 startTimeStr = startTime.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
 
-                StartSimulation(id, startTimeStr, true);
+                int headLen = 1;
+                string headFile = Path.Combine(SimFolder, "head.txt");
+                if (File.Exists(headFile))
+                {
+                    int.TryParse(File.ReadLines(headFile).FirstOrDefault() ?? "1", out headLen);
+                    if (headLen > 4)
+                    {
+                        headLen = 4;
+                    }
+                    else if (headLen < 1)
+                    {
+                        headLen = 1;
+                    }
+                }
+
+                StartSimulation(id, startTimeStr, true, headLen);
             }
             catch
             {
