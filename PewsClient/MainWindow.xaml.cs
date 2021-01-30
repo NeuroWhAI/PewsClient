@@ -460,14 +460,6 @@ namespace PewsClient
                             m_updateGrid = true;
                             await RequestGridData(eqkId, phase);
                         }
-
-                        if (phase != 2 && phaseChanged)
-                        {
-                            foreach (var stn in m_stations)
-                            {
-                                stn.ResetMaxMmi();
-                            }
-                        }
                     }
                     else
                     {
@@ -1531,7 +1523,8 @@ namespace PewsClient
             {
                 if (loc.Name == stnName)
                 {
-                    if (mmi != loc.Mmi)
+                    // 진도가 상승했을 때만 갱신.
+                    if (mmi > loc.Mmi)
                     {
                         loc.Mmi = mmi;
                         loc.MmiBrush = (mmi >= 6 ? Brushes.White : Brushes.Black);
@@ -1915,12 +1908,12 @@ namespace PewsClient
                 }
 
                 int prevMaxMmi = stn.MaxMmi;
-                stn.UpdateMmi(mmi, phase, MaxMmiLifetime);
+                stn.UpdateMmi(mmi, MaxMmiLifetime);
                 stn.RawMmi = rawMmi;
 
-                // 속보 상황이고 관측소 최대진도가 바뀌었으며 그것이 2 이상일 때
-                // 해당 지역 계측진도 갱신.
-                if (phase == 2 && prevMaxMmi != stn.MaxMmi && stn.MaxMmi >= 2)
+                // 속보 상황이고 관측소 최대진도가 직전 대비 올랐고 그것이 2 이상일 때
+                // 해당 지역 계측진도 갱신 시도.
+                if (phase == 2 && prevMaxMmi < stn.MaxMmi && stn.MaxMmi >= 2)
                 {
                     UpdateMmiLocationList(stn.MaxMmi, stn.Name, stn.Location);
                 }

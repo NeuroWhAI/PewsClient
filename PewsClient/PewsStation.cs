@@ -94,12 +94,12 @@ namespace PewsClient
 
         private DateTime m_mmiLife = DateTime.MinValue;
 
-        public void UpdateMmi(int newMmi, int phase, TimeSpan lifetime)
+        public void UpdateMmi(int newMmi, TimeSpan lifetime)
         {
             Mmi = newMmi;
 
-            // 이번 진도가 최대 진도를 넘었거나 지진 속보가 없을 때 초기화 시간이 되었다면 최대 진도 갱신.
-            if (newMmi > MaxMmi || (phase != 2 && DateTime.UtcNow >= m_mmiLife))
+            // 이번 진도가 최대 진도 이상이거나 초기화 시간이 되었다면 최대 진도와 초기화 시간 갱신.
+            if (newMmi >= MaxMmi || DateTime.UtcNow >= m_mmiLife)
             {
                 MaxMmi = newMmi;
                 m_mmiLife = DateTime.UtcNow + lifetime;
