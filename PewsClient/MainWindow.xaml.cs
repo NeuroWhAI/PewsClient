@@ -121,6 +121,7 @@ namespace PewsClient
         private readonly int PhaseDownDelay = 8;
         private string m_prevAlarmId = string.Empty;
         private DateTimeOffset m_currEqkTime = DateTimeOffset.MinValue;
+        private bool m_updateLoc = false;
 
         private bool m_stationUpdate = true;
         private DateTime m_nextStationUpdate = DateTime.MaxValue;
@@ -165,6 +166,7 @@ namespace PewsClient
             //StartSimulation("2020005363", "20200511194506"); // 북한 3.8
             //StartSimulation("2020018042", "20201218171723"); // 강원 2.7
             //StartSimulation("2021000517", "20210203121756"); // 인천 2.2
+            //StartSimulation("2021007178", "20211214171904"); // 제주 4.9
 
             //StartSimulation("2020123456", "20000101090002", true); // 가상
 #endif
@@ -417,8 +419,7 @@ namespace PewsClient
 
                     if (phase > 1)
                     {
-                        var infoBytes = bytes.Skip(bytes.Length - MaxEqkStrLen).ToArray();
-                        string eqkId = HandleEqk(serverPhase, body, infoBytes);
+                        string eqkId = HandleEqk(serverPhase, body);
 
                         ShowEqkInfo();
 
@@ -453,6 +454,22 @@ namespace PewsClient
                             {
                                 m_maxMmi = maxMaxMmi;
                                 UpdateEqkMmiPanel(maxMaxMmi);
+                            }
+                        }
+
+                        if (phaseChanged || phaseRestored || m_updateLoc)
+                        {
+                            var infoBytes = bytes.Skip(bytes.Length - MaxEqkStrLen).ToArray();
+                            txtEqkLoc.Text = WebUtility.UrlDecode(Encoding.UTF8.GetString(infoBytes)).Trim();
+
+                            if (!string.IsNullOrWhiteSpace(eqkId) && !m_localSim)
+                            {
+                                m_updateLoc = true;
+                                string eqkLoc = await RequestLocData(eqkId, phase);
+                                if (!string.IsNullOrEmpty(eqkLoc))
+                                {
+                                    txtEqkLoc.Text = eqkLoc;
+                                }
                             }
                         }
 
@@ -1330,7 +1347,7 @@ namespace PewsClient
             }
         }
 
-        private void UpdateEqkInfo(int phase, DateTimeOffset time, string location, int mmi, double magnitude, double depth = double.NaN)
+        private void UpdateEqkInfo(int phase, DateTimeOffset time, int mmi, double magnitude, double depth = double.NaN)
         {
             if (phase <= 1)
             {
@@ -1365,7 +1382,6 @@ namespace PewsClient
             txtEqkDate.Text = time.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             txtEqkTime.Text = time.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
 
-            txtEqkLoc.Text = location.Trim();
             txtMmi.Text = Earthquake.MMIToString(mmi);
             txtMag.Text = magnitude.ToString("F1");
             txtDepth.Text = (double.IsNaN(depth) ? "-" : depth.ToString("F0"));
@@ -1646,7 +1662,7 @@ namespace PewsClient
 
         //#############################################################################################
 
-        private string HandleEqk(int phase, string body, byte[] infoBytes)
+        private string HandleEqk(int phase, string body)
         {
             if (phase <= 1)
             {
@@ -1654,7 +1670,6 @@ namespace PewsClient
             }
 
             string data = body.Substring(body.Length - (MaxEqkStrLen * 8 + MaxEqkInfoLen));
-            string eqkStr = WebUtility.UrlDecode(Encoding.UTF8.GetString(infoBytes));
 
             double origLat = 30 + (double)Convert.ToInt32(data.Substring(0, 10), 2) / 100;
             double origLon = 124 + (double)Convert.ToInt32(data.Substring(10, 10), 2) / 100;
@@ -1683,11 +1698,11 @@ namespace PewsClient
 
             if (phase == 2)
             {
-                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag);
+                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkIntens, eqkMag);
             }
             else if (phase == 3)
             {
-                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkStr, eqkIntens, eqkMag, (eqkDep == 0) ? double.NaN : eqkDep);
+                UpdateEqkInfo(phase, eqkTime.ToLocalTime(), eqkIntens, eqkMag, (eqkDep == 0) ? double.NaN : eqkDep);
             }
 
             string alarmId = $"{eqkId}|{phase}";
@@ -1741,8 +1756,20 @@ namespace PewsClient
 
             for (int i = 0; i + 20 <= body.Length; i += 20)
             {
-                stnLat.Add(30 + (double)Convert.ToInt32(body.Substring(i, 10), 2) / 100);
-                stnLon.Add(120 + (double)Convert.ToInt32(body.Substring(i + 10, 10), 2) / 100);
+                double lat = (double)Convert.ToInt32(body.Substring(i, 10), 2) / 100;
+                double lon = (double)Convert.ToInt32(body.Substring(i + 10, 10), 2) / 100;
+                stnLat.Add(30 + lat);
+
+                // KS_ULDR(37.48, 130.89), KS_TAHA(37.51, 130.81)
+                if (lat.AlmostEqualTo(7.48) && lon.AlmostEqualTo(0.89)
+                    || lat.AlmostEqualTo(7.51) && lon.AlmostEqualTo(0.81))
+                {
+                    stnLon.Add(130 + lon);
+                }
+                else
+                {
+                    stnLon.Add(120 + lon);
+                }
             }
 
             if (stnLat.Count < 99)
@@ -2079,6 +2106,74 @@ namespace PewsClient
             UpdateHomeMmi(m_intensityGrid);
 
             m_updateGrid = false;
+        }
+
+        private async Task<string> RequestLocData(string eqkId, int phase)
+        {
+            byte[] bytes = null;
+
+            try
+            {
+                string fileName = string.Empty;
+                if (phase == 2)
+                {
+                    fileName = $"{eqkId}.le";
+                }
+                else if (phase == 3)
+                {
+                    fileName = $"{eqkId}.li";
+                }
+                else
+                {
+                    m_updateLoc = false;
+                    return string.Empty;
+                }
+
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    using (var client = new TimeoutWebClient(TimeoutGrid))
+                    {
+                        string url = $"{DataPath}/{fileName}";
+                        bytes = await client.DownloadDataTaskAsync(url);
+                    }
+                }
+            }
+            catch
+            {
+                bytes = null;
+            }
+
+            if (bytes == null || bytes.Length <= 0)
+            {
+                // 나중에 재시도.
+                m_updateLoc = true;
+                return string.Empty;
+            }
+
+            m_updateLoc = false;
+
+            string json = Encoding.UTF8.GetString(bytes);
+
+            string propName = "\"info_ko\"";
+            int idx = json.IndexOf(propName);
+            if (idx < 0)
+            {
+                return string.Empty;
+            }
+
+            idx = json.IndexOf('"', idx + propName.Length);
+            if (idx < 0)
+            {
+                return string.Empty;
+            }
+
+            int endIdx = json.IndexOf('"', idx + 1);
+            if (endIdx < 0)
+            {
+                return string.Empty;
+            }
+
+            return json.Substring(idx + 1, endIdx - idx - 1).Trim();
         }
 
         //#############################################################################################
